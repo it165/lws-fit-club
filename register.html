@@ -126,6 +126,9 @@
     // ยิงข้อมูลไป Google Apps Script ผ่าน API
     fetch(GAS_URL, {
       method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8', // 🌟 เพิ่มบรรทัดนี้เพื่อป้องกัน CORS Error
+      },
       body: JSON.stringify(formData)
     })
     .then(response => response.json())
