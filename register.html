@@ -123,38 +123,45 @@
       birthdate: document.getElementById('birthdate').value
     };
     
-    // ยิงข้อมูลไป Google Apps Script ผ่าน API
+    // ยิงข้อมูลไป Google Apps Script (เวอร์ชันดักจับ Error ขั้นสุดยอด)
     fetch(GAS_URL, {
+      redirect: "follow", // บังคับให้วิ่งตามลิงก์ Google
       method: 'POST',
       headers: {
-        'Content-Type': 'text/plain;charset=utf-8', // 🌟 เพิ่มบรรทัดนี้เพื่อป้องกัน CORS Error
+        "Content-Type": "text/plain;charset=utf-8", // ป้องกันการโดนบล็อก CORS
       },
       body: JSON.stringify(formData)
     })
-    .then(response => response.json())
-    .then(result => {
-      if (result.status === "success") {
-        Swal.fire({
-          title: 'สำเร็จ! 🎉',
-          text: 'คุณได้ลงทะเบียนสมาชิก LWS เรียบร้อยแล้วค่ะ',
-          icon: 'success',
-          confirmButtonColor: '#198754'
-        }).then(() => {
-          window.location.href = 'index.html'; // เด้งกลับหน้าแรกอัตโนมัติ
-        });
-        document.getElementById('regForm').reset();
-      } else {
-        Swal.fire('สมัครไม่สำเร็จ', result.message, 'error');
+    .then(response => response.text()) // รับค่าเป็นข้อความดิบมาก่อน
+    .then(text => {
+      try {
+        let result = JSON.parse(text); // พยายามแปลผลเป็น JSON
+        if (result.status === "success") {
+          Swal.fire({
+            title: 'สำเร็จ! 🎉',
+            text: 'คุณได้ลงทะเบียนสมาชิก LWS เรียบร้อยแล้วค่ะ',
+            icon: 'success',
+            confirmButtonColor: '#198754'
+          }).then(() => {
+            window.location.href = 'index.html'; 
+          });
+          document.getElementById('regForm').reset();
+        } else {
+          // ถ้าแปลได้ แต่สถานะคือ error ให้โชว์สาเหตุ
+          Swal.fire('สมัครไม่สำเร็จ', result.message || text, 'error');
+        }
+      } catch(e) {
+        // ถ้าแปลเป็น JSON ไม่ได้เลย (เช่น Google ส่งหน้าจอ Error กลับมา) ให้โชว์ข้อความดิบๆ
+        Swal.fire('รูปแบบข้อมูลผิดพลาด', text.substring(0, 200), 'error');
       }
     })
     .catch(error => {
-      Swal.fire('ระบบขัดข้อง', 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้', 'error');
+      Swal.fire('การเชื่อมต่อขัดข้อง', error.toString(), 'error');
     })
     .finally(() => {
       btn.innerHTML = 'ลงทะเบียนสมาชิก';
       btn.disabled = false;
     });
-  });
 </script>
 </body>
 </html>
