@@ -87,11 +87,11 @@
 </div>
 
 <script>
-  // 🌟 1. ดึง UID จากลิงก์ที่ส่งมาจากหน้าแรก
+  // 🌟 ดึง UID และใส่ลิงก์ GAS
   const urlParams = new URLSearchParams(window.location.search);
   const currentUid = urlParams.get('uid');
-
-  // 🌟 2. ใส่ลิงก์ Deploy ของ Google Apps Script ที่นี่
+  
+  // 🚨 อย่าลืมเอาลิงก์ Apps Script ของคุณมาใส่ตรงนี้นะครับ
   const GAS_URL = "https://script.google.com/macros/s/AKfycbw0jdlT9JewPZLbAOtKvdpE3bxFkMM6qXFRWoWZH5RmDgxt3w_A9nUrV1uJ_cNJFFW6qA/exec"; 
 
   window.onload = function() {
@@ -113,7 +113,7 @@
     btn.disabled = true;
     
     const formData = {
-      action: "register", // เพิ่มตัวแปรนี้ให้ฝั่งหลังบ้านรู้ว่ามาจากฟอร์มไหน
+      action: "register",
       userId: document.getElementById('userId').value,
       name: document.getElementById('name').value,
       phone: document.getElementById('phone').value,
@@ -123,19 +123,19 @@
       birthdate: document.getElementById('birthdate').value
     };
     
-    // ยิงข้อมูลไป Google Apps Script (เวอร์ชันดักจับ Error ขั้นสุดยอด)
+    // ยิงข้อมูลไป Google Apps Script (เวอร์ชันดักจับ Error)
     fetch(GAS_URL, {
-      redirect: "follow", // บังคับให้วิ่งตามลิงก์ Google
+      redirect: "follow",
       method: 'POST',
       headers: {
-        "Content-Type": "text/plain;charset=utf-8", // ป้องกันการโดนบล็อก CORS
+        "Content-Type": "text/plain;charset=utf-8",
       },
       body: JSON.stringify(formData)
     })
-    .then(response => response.text()) // รับค่าเป็นข้อความดิบมาก่อน
+    .then(response => response.text())
     .then(text => {
       try {
-        let result = JSON.parse(text); // พยายามแปลผลเป็น JSON
+        let result = JSON.parse(text);
         if (result.status === "success") {
           Swal.fire({
             title: 'สำเร็จ! 🎉',
@@ -147,11 +147,9 @@
           });
           document.getElementById('regForm').reset();
         } else {
-          // ถ้าแปลได้ แต่สถานะคือ error ให้โชว์สาเหตุ
           Swal.fire('สมัครไม่สำเร็จ', result.message || text, 'error');
         }
       } catch(e) {
-        // ถ้าแปลเป็น JSON ไม่ได้เลย (เช่น Google ส่งหน้าจอ Error กลับมา) ให้โชว์ข้อความดิบๆ
         Swal.fire('รูปแบบข้อมูลผิดพลาด', text.substring(0, 200), 'error');
       }
     })
@@ -162,6 +160,7 @@
       btn.innerHTML = 'ลงทะเบียนสมาชิก';
       btn.disabled = false;
     });
+  }); // 🚨 ปีกกา 2 ตัวนี้แหละครับที่มักจะหายไปตอนก๊อปปี้วาง!
 </script>
 </body>
 </html>
