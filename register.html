@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>สมัครสมาชิก LWS FIT FOR HEALTH CLUB</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
+  <style>
+    body { background-color: #f4f7f6; font-family: 'Sarabun', sans-serif; }
+    .card { border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: none; }
+    .btn-success { background-color: #198754; border: none; padding: 12px; font-weight: bold; border-radius: 8px;}
+    
+    /* =========================================
+   📱 Mobile App UI Toolkit
+   ========================================= */
+    input, select, textarea { font-size: 16px !important; border-radius: 10px !important; }
+    * { -webkit-tap-highlight-color: transparent; }
+    ::-webkit-scrollbar { display: none; }
+    body { -ms-overflow-style: none; scrollbar-width: none; background-color: #f4f7f6; padding-bottom: 40px; }
+    .container { max-width: 480px !important; margin: 0 auto; padding: 0 15px; }
+    .btn { border-radius: 12px; padding: 12px 20px; font-weight: bold; }
+    .card { border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); border: none; }
+    
+    /* เพิ่มปุ่มย้อนกลับ */
+    .btn-back { background-color: #e9ecef; color: #495057; width: 100%; margin-top: 10px; }
+  </style>
+</head>
+<body>
+
+<div id="loading" class="text-center mt-5">
+  <div class="spinner-border text-success" role="status"></div>
+  <p class="mt-3 text-muted">กำลังเตรียมหน้าลงทะเบียน...</p>
+</div>
+
+<div class="container mt-4 mb-4" id="formContainer" style="display: none; max-width: 500px;">
+  <div class="card p-4">
+    <div class="text-center mb-4">
+      <h4 class="text-success fw-bold">LWS FIT FOR HEALTH 2026</h4>
+      <p class="text-muted small">กรอกข้อมูลเพื่อรับสิทธิประโยชน์และสะสมคะแนน</p>
+    </div>
+    
+    <form id="regForm">
+      <input type="hidden" id="userId">
+      
+      <div class="mb-3">
+        <label class="form-label fw-bold">1. ชื่อ-นามสกุล</label>
+        <input type="text" class="form-control" id="name" required placeholder="นาย สมชาย ใจดี">
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-bold">2. เบอร์โทรศัพท์</label>
+        <input type="tel" class="form-control" id="phone" required placeholder="08XXXXXXXX" pattern="[0-9]{10}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-bold">3. ร้านค้า / โครงการ / อื่นๆ</label>
+        <input type="text" class="form-control" id="project" required placeholder="ระบุชื่อหน่วยงาน">
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-bold">4. จังหวัด</label>
+        <input type="text" class="form-control" id="province" required placeholder="เช่น กรุงเทพมหานคร">
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-bold">5. ประเภทลูกค้า</label>
+        <select class="form-select" id="customerType" required>
+          <option value="" disabled selected>เลือกประเภท</option>
+          <option value="เจ้าของร้าน">เจ้าของร้าน</option>
+          <option value="ผู้รับเหมา">ผู้รับเหมา</option>
+          <option value="ช่าง">ช่าง</option>
+          <option value="เจ้าของโครงการ">เจ้าของโครงการ</option>
+          <option value="ลูกค้าทั่วไป">ลูกค้าทั่วไป</option>
+        </select>
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-bold">6. วันเกิด</label>
+        <input type="date" class="form-control" id="birthdate" required>
+      </div>
+      <div class="mb-4 form-check">
+        <input type="checkbox" class="form-check-input" id="agree" required>
+        <label class="form-check-label text-muted small" for="agree">7. ยอมรับเงื่อนไขและนโยบายความเป็นส่วนตัวของโครงการ</label>
+      </div>
+      
+      <button type="submit" class="btn btn-success w-100" id="submitBtn">ลงทะเบียนสมาชิก</button>
+      <button type="button" class="btn btn-back" onclick="window.location.href='index.html'">กลับหน้าแรก</button>
+    </form>
+  </div>
+</div>
+
+<script>
+  // 🌟 1. ดึง UID จากลิงก์ที่ส่งมาจากหน้าแรก
+  const urlParams = new URLSearchParams(window.location.search);
+  const currentUid = urlParams.get('uid');
+
+  // 🌟 2. ใส่ลิงก์ Deploy ของ Google Apps Script ที่นี่
+  const GAS_URL = "ใส่_ลิงก์_APPS_SCRIPT_ที่ลงท้ายด้วย_/exec_ของคุณที่นี่"; 
+
+  window.onload = function() {
+    if(!currentUid) {
+      Swal.fire({ icon: 'error', title: 'ไม่พบข้อมูล', text: 'กรุณาเข้าใช้งานผ่านเมนูใน LINE' })
+        .then(() => { window.location.href = 'index.html'; });
+      return;
+    }
+    
+    document.getElementById('userId').value = currentUid;
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('formContainer').style.display = 'block';
+  };
+
+  document.getElementById('regForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const btn = document.getElementById('submitBtn');
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> กำลังบันทึก...';
+    btn.disabled = true;
+    
+    const formData = {
+      action: "register", // เพิ่มตัวแปรนี้ให้ฝั่งหลังบ้านรู้ว่ามาจากฟอร์มไหน
+      userId: document.getElementById('userId').value,
+      name: document.getElementById('name').value,
+      phone: document.getElementById('phone').value,
+      project: document.getElementById('project').value,
+      province: document.getElementById('province').value,
+      customerType: document.getElementById('customerType').value,
+      birthdate: document.getElementById('birthdate').value
+    };
+    
+    // ยิงข้อมูลไป Google Apps Script ผ่าน API
+    fetch(GAS_URL, {
+      method: 'POST',
+      body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(result => {
+      if (result.status === "success") {
+        Swal.fire({
+          title: 'สำเร็จ! 🎉',
+          text: 'คุณได้ลงทะเบียนสมาชิก LWS เรียบร้อยแล้วค่ะ',
+          icon: 'success',
+          confirmButtonColor: '#198754'
+        }).then(() => {
+          window.location.href = 'index.html'; // เด้งกลับหน้าแรกอัตโนมัติ
+        });
+        document.getElementById('regForm').reset();
+      } else {
+        Swal.fire('สมัครไม่สำเร็จ', result.message, 'error');
+      }
+    })
+    .catch(error => {
+      Swal.fire('ระบบขัดข้อง', 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้', 'error');
+    })
+    .finally(() => {
+      btn.innerHTML = 'ลงทะเบียนสมาชิก';
+      btn.disabled = false;
+    });
+  });
+</script>
+</body>
+</html>
