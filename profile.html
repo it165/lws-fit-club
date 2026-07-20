@@ -3,16 +3,30 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>โปรไฟล์ส่วนตัว - LWS FIT </title>
+  <title>โปรไฟล์ส่วนตัว - LWS FIT</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <!-- 🌟 เพิ่ม LINE LIFF SDK -->
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   
   <style>
     body { background-color: #f4f7f6; font-family: 'Sarabun', sans-serif; padding-bottom: 40px; }
     .container { max-width: 480px !important; margin: 0 auto; padding: 0 15px; }
     .card { border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); border: none; margin-top: 20px; padding: 25px; }
     
-    .profile-icon { font-size: 50px; text-align: center; margin-bottom: 5px; }
+    /* 🌟 ตกแต่งรูปโปรไฟล์ LINE */
+    .profile-img { 
+      width: 100px; 
+      height: 100px; 
+      border-radius: 50%; 
+      object-fit: cover; 
+      border: 4px solid #198754; 
+      margin: 0 auto 15px auto; 
+      display: block; 
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      background-color: #e9ecef; /* สีพื้นหลังตอนรอโหลดรูป */
+    }
+
     .info-label { font-size: 13px; color: #6c757d; margin-bottom: 2px; }
     .info-value { font-size: 16px; font-weight: bold; color: #212529; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 8px;}
     
@@ -20,7 +34,6 @@
     .stats-box .row > div:first-child { border-right: 1px solid rgba(255,255,255,0.3); }
     
     .btn-back { background-color: #e9ecef; color: #495057; border-radius: 12px; padding: 12px; font-weight: bold; width: 100%; border: none; margin-top: 10px; }
-    
     .tier-badge { font-size: 14px; padding: 8px 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
   </style>
 </head>
@@ -28,10 +41,13 @@
 
 <div class="container">
   <div class="card">
-    <div class="profile-icon">👤</div>
+    
+    <!-- 🌟 เปลี่ยนจากอีโมจิ 👤 เป็นรูปภาพ -->
+    <img id="profileImage" src="https://cdn-icons-png.flaticon.com/512/847/847969.png" class="profile-img" alt="Profile">
+    
     <h4 class="text-center fw-bold mb-2" id="dispName">กำลังโหลดข้อมูล...</h4>
     
-    <!-- 🌟 โชว์ระดับสมาชิกและก้าวของเดือนนี้ -->
+    <!-- โชว์ระดับสมาชิกและก้าวของเดือนนี้ -->
     <div class="text-center mb-4">
       <span class="badge rounded-pill tier-badge" id="dispTier" style="background-color: #6c757d;">กำลังคำนวณระดับ...</span>
       <div style="font-size: 13px; color: #6c757d; margin-top: 10px;" id="dispMonthlySteps">ก้าวสะสมเดือนนี้: - ก้าว</div>
@@ -74,8 +90,11 @@
   const urlParams = new URLSearchParams(window.location.search);
   const currentUid = urlParams.get('uid');
   
-  // 🚨 ใส่ลิงก์ Deploy ของคุณตรงนี้
+  // 🚨 1. ใส่ลิงก์ Deploy ของคุณตรงนี้
   const GAS_URL = "https://script.google.com/macros/s/AKfycbw0jdlT9JewPZLbAOtKvdpE3bxFkMM6qXFRWoWZH5RmDgxt3w_A9nUrV1uJ_cNJFFW6qA/exec"; 
+  
+  // 🚨 2. ใส่ LIFF ID ของคุณตรงนี้ (ใช้ตัวเดียวกับหน้า index เลยครับ)
+  const myLiffId = "2010703651-c2qp2DaT"; 
 
   window.onload = function() {
     if(!currentUid) {
@@ -83,9 +102,29 @@
         .then(() => { window.location.href = 'index.html'; });
       return;
     }
+    
+    // โหลดข้อมูลพอยท์และชื่อจาก Google Sheets
     loadProfile();
+    
+    // โหลดรูปโปรไฟล์จาก LINE
+    loadLineProfilePicture();
   };
 
+  // 🌟 ฟังก์ชันสำหรับดึงรูปภาพจาก LINE โดยเฉพาะ
+  function loadLineProfilePicture() {
+    liff.init({ liffId: myLiffId }).then(() => {
+      if (liff.isLoggedIn()) {
+        liff.getProfile().then(profile => {
+          if (profile.pictureUrl) {
+            // ถ้าระบบเจอรูปโปรไฟล์ ให้เอารูปมาใส่ในแท็ก <img>
+            document.getElementById('profileImage').src = profile.pictureUrl;
+          }
+        }).catch(err => console.error("ดึงข้อมูลรูปภาพไม่สำเร็จ", err));
+      }
+    }).catch(err => console.error("LIFF Init Error", err));
+  }
+
+  // ฟังก์ชันโหลดข้อมูลจาก Sheet (แบบเดิม)
   function loadProfile() {
     fetch(GAS_URL, {
       method: 'POST',
@@ -104,23 +143,22 @@
         document.getElementById('dispPoints').innerText = (result.data.currentPoints || 0).toLocaleString();
         document.getElementById('dispRate').innerText = (result.data.stepsPerPoint || 1000).toLocaleString();
 
-        // 🌟 อัปเดตข้อมูลระดับสมาชิกและเปลี่ยนสี
         document.getElementById('dispMonthlySteps').innerText = `ก้าวสะสมเดือนนี้: ${(result.data.monthlySteps || 0).toLocaleString()} ก้าว`;
         
         let tierBadge = document.getElementById('dispTier');
         tierBadge.innerText = "ระดับ: " + result.data.tier;
         
         if (result.data.tier.includes("Diamond")) {
-          tierBadge.style.background = "linear-gradient(135deg, #0dcaf0, #0aa2c0)"; // ฟ้า
+          tierBadge.style.background = "linear-gradient(135deg, #0dcaf0, #0aa2c0)"; 
           tierBadge.style.color = "white";
         } else if (result.data.tier.includes("Gold")) {
-          tierBadge.style.background = "linear-gradient(135deg, #ffc107, #e0a800)"; // ทอง
+          tierBadge.style.background = "linear-gradient(135deg, #ffc107, #e0a800)"; 
           tierBadge.style.color = "#423200";
         } else if (result.data.tier.includes("Silver")) {
-          tierBadge.style.background = "linear-gradient(135deg, #adb5bd, #868e96)"; // เงิน
+          tierBadge.style.background = "linear-gradient(135deg, #adb5bd, #868e96)"; 
           tierBadge.style.color = "white";
         } else {
-          tierBadge.style.background = "linear-gradient(135deg, #d38c44, #a36528)"; // ทองแดง (เริ่มต้น)
+          tierBadge.style.background = "linear-gradient(135deg, #d38c44, #a36528)"; 
           tierBadge.style.color = "white";
         }
 
