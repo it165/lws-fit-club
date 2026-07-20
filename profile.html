@@ -12,7 +12,7 @@
     .container { max-width: 480px !important; margin: 0 auto; padding: 0 15px; }
     .card { border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); border: none; margin-top: 20px; padding: 25px; }
     
-    .profile-icon { font-size: 50px; text-align: center; margin-bottom: 10px; }
+    .profile-icon { font-size: 50px; text-align: center; margin-bottom: 5px; }
     .info-label { font-size: 13px; color: #6c757d; margin-bottom: 2px; }
     .info-value { font-size: 16px; font-weight: bold; color: #212529; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 8px;}
     
@@ -20,6 +20,8 @@
     .stats-box .row > div:first-child { border-right: 1px solid rgba(255,255,255,0.3); }
     
     .btn-back { background-color: #e9ecef; color: #495057; border-radius: 12px; padding: 12px; font-weight: bold; width: 100%; border: none; margin-top: 10px; }
+    
+    .tier-badge { font-size: 14px; padding: 8px 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
   </style>
 </head>
 <body>
@@ -27,13 +29,19 @@
 <div class="container">
   <div class="card">
     <div class="profile-icon">👤</div>
-    <h4 class="text-center fw-bold mb-4" id="dispName">กำลังโหลดข้อมูล...</h4>
+    <h4 class="text-center fw-bold mb-2" id="dispName">กำลังโหลดข้อมูล...</h4>
+    
+    <!-- 🌟 โชว์ระดับสมาชิกและก้าวของเดือนนี้ -->
+    <div class="text-center mb-4">
+      <span class="badge rounded-pill tier-badge" id="dispTier" style="background-color: #6c757d;">กำลังคำนวณระดับ...</span>
+      <div style="font-size: 13px; color: #6c757d; margin-top: 10px;" id="dispMonthlySteps">ก้าวสะสมเดือนนี้: - ก้าว</div>
+    </div>
 
     <!-- กล่องโชว์สถิติ ก้าวเดิน & พอยท์ -->
     <div class="stats-box">
       <div class="row mb-2">
         <div class="col-6">
-          <div style="font-size: 13px; opacity: 0.9;">👣 ก้าวสะสม</div>
+          <div style="font-size: 13px; opacity: 0.9;">👣 ก้าวรวมทั้งหมด</div>
           <div class="fw-bold" style="font-size: 24px;" id="dispSteps">-</div>
         </div>
         <div class="col-6">
@@ -67,7 +75,7 @@
   const currentUid = urlParams.get('uid');
   
   // 🚨 ใส่ลิงก์ Deploy ของคุณตรงนี้
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbw0jdlT9JewPZLbAOtKvdpE3bxFkMM6qXFRWoWZH5RmDgxt3w_A9nUrV1uJ_cNJFFW6qA/exec"; 
+  const GAS_URL = "ใส่_ลิงก์_APPS_SCRIPT_ที่ลงท้ายด้วย_/exec_ของคุณที่นี่"; 
 
   window.onload = function() {
     if(!currentUid) {
@@ -80,7 +88,6 @@
 
   function loadProfile() {
     fetch(GAS_URL, {
-      redirect: "follow",
       method: 'POST',
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify({ action: "getProfile", userId: currentUid })
@@ -93,10 +100,30 @@
         document.getElementById('dispPhone').innerText = result.data.phone;
         document.getElementById('dispProvince').innerText = result.data.province;
         
-        // 🌟 อัปเดตจำนวนก้าวและพอยท์ให้มีลูกน้ำสวยๆ
         document.getElementById('dispSteps').innerText = (result.data.totalSteps || 0).toLocaleString();
         document.getElementById('dispPoints').innerText = (result.data.currentPoints || 0).toLocaleString();
         document.getElementById('dispRate').innerText = (result.data.stepsPerPoint || 1000).toLocaleString();
+
+        // 🌟 อัปเดตข้อมูลระดับสมาชิกและเปลี่ยนสี
+        document.getElementById('dispMonthlySteps').innerText = `ก้าวสะสมเดือนนี้: ${(result.data.monthlySteps || 0).toLocaleString()} ก้าว`;
+        
+        let tierBadge = document.getElementById('dispTier');
+        tierBadge.innerText = "ระดับ: " + result.data.tier;
+        
+        if (result.data.tier.includes("Diamond")) {
+          tierBadge.style.background = "linear-gradient(135deg, #0dcaf0, #0aa2c0)"; // ฟ้า
+          tierBadge.style.color = "white";
+        } else if (result.data.tier.includes("Gold")) {
+          tierBadge.style.background = "linear-gradient(135deg, #ffc107, #e0a800)"; // ทอง
+          tierBadge.style.color = "#423200";
+        } else if (result.data.tier.includes("Silver")) {
+          tierBadge.style.background = "linear-gradient(135deg, #adb5bd, #868e96)"; // เงิน
+          tierBadge.style.color = "white";
+        } else {
+          tierBadge.style.background = "linear-gradient(135deg, #d38c44, #a36528)"; // ทองแดง (เริ่มต้น)
+          tierBadge.style.color = "white";
+        }
+
       } else {
         Swal.fire('ผิดพลาด', 'ไม่พบข้อมูลโปรไฟล์ของคุณ', 'error');
       }
