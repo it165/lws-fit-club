@@ -31,7 +31,7 @@
 
     <!-- กล่องโชว์สถิติ ก้าวเดิน & พอยท์ -->
     <div class="stats-box">
-      <div class="row">
+      <div class="row mb-2">
         <div class="col-6">
           <div style="font-size: 13px; opacity: 0.9;">👣 ก้าวสะสม</div>
           <div class="fw-bold" style="font-size: 24px;" id="dispSteps">-</div>
@@ -40,6 +40,9 @@
           <div style="font-size: 13px; opacity: 0.9;">🎁 พอยท์คงเหลือ</div>
           <div class="fw-bold text-warning" style="font-size: 24px;" id="dispPoints">-</div>
         </div>
+      </div>
+      <div style="font-size: 12px; color: #ffc107; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 8px;">
+        💡 ทุกๆ <span id="dispRate">-</span> ก้าว = 1 พอยท์
       </div>
     </div>
 
@@ -93,6 +96,7 @@
         // 🌟 อัปเดตจำนวนก้าวและพอยท์ให้มีลูกน้ำสวยๆ
         document.getElementById('dispSteps').innerText = (result.data.totalSteps || 0).toLocaleString();
         document.getElementById('dispPoints').innerText = (result.data.currentPoints || 0).toLocaleString();
+        document.getElementById('dispRate').innerText = (result.data.stepsPerPoint || 1000).toLocaleString();
       } else {
         Swal.fire('ผิดพลาด', 'ไม่พบข้อมูลโปรไฟล์ของคุณ', 'error');
       }
