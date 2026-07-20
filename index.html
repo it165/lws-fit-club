@@ -3,119 +3,116 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>LWS FIT FOR HEALTH 2026</title>
-  
+  <title>หน้าหลัก - LWS FIT</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   
   <style>
-    body { background-color: #f4f7f6; font-family: 'Sarabun', sans-serif; margin: 0; padding: 0; }
-    .main-box { max-width: 450px; margin: 0 auto; padding: 20px; }
-    .header-banner { background: linear-gradient(135deg, #198754, #20c997); color: white; border-radius: 15px; padding: 25px; text-align: center; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(25,135,84,0.15); }
-    .menu-btn { background-color: #ffffff; border: none; border-radius: 15px; padding: 20px; width: 100%; text-align: left; margin-bottom: 15px; display: flex; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.03); transition: transform 0.1s; cursor: pointer; }
-    .menu-btn:active { transform: scale(0.98); background-color: #f8f9fa; }
-    .menu-icon { font-size: 28px; margin-right: 15px; width: 45px; height: 45px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; }
+    body { background-color: #f4f7f6; font-family: 'Sarabun', sans-serif; padding-bottom: 40px; }
+    .container { max-width: 480px !important; margin: 0 auto; padding: 0 15px; }
+    .header-img { width: 100%; border-radius: 0 0 20px 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 25px; }
+    
+    .menu-btn { 
+      width: 100%; border-radius: 12px; padding: 15px; font-weight: bold; font-size: 16px; 
+      border: none; margin-bottom: 12px; display: flex; align-items: center; justify-content: center;
+      transition: 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+    .menu-btn:active { transform: scale(0.98); }
+    
+    /* สีของปุ่มต่างๆ */
+    .btn-register { background: linear-gradient(135deg, #0d6efd, #0b5ed7); color: white; }
+    .btn-upload { background: linear-gradient(135deg, #198754, #157347); color: white; }
+    .btn-profile { background: linear-gradient(135deg, #6f42c1, #59339d); color: white; }
+    .btn-leaderboard { background: linear-gradient(135deg, #fd7e14, #e85e0c); color: white; }
+    .btn-redeem { background: linear-gradient(135deg, #f59f00, #d9480f); color: white; }
+    
+    /* ปุ่มที่ถูกล็อก (Disabled) */
+    .menu-btn:disabled { background: #e9ecef; color: #adb5bd; cursor: not-allowed; box-shadow: none; transform: none; }
   </style>
 </head>
 <body>
 
-  <div class="main-box">
-    
-    <div class="header-banner">
-      <h4 class="fw-bold mb-1">LWS FIT FOR HEALTH CLUB</h4>
-      <p class="mb-0 small opacity-75" id="welcomeText">กำลังโหลดข้อมูล LINE...</p>
-    </div>
+<!-- แบนเนอร์หัวเว็บ (สามารถเปลี่ยนลิงก์รูปภาพได้) -->
+<img src="https://images.unsplash.com/photo-1552674605-152ffb3225f5?auto=format&fit=crop&w=800&q=80" alt="Banner" class="header-img">
 
-    <!-- เมนูทั้ง 5 ปุ่ม -->
-    <div id="menuContainer" style="pointer-events: none; opacity: 0.6;">
-      
-      <button class="menu-btn" onclick="goToPage('register')">
-        <span class="menu-icon bg-success bg-opacity-10 text-success">📝</span>
-        <div>
-          <h6 class="fw-bold mb-0 text-dark">ลงทะเบียนสมาชิก</h6>
-          <small class="text-muted">กรอกข้อมูลผู้ใช้งานครั้งแรก</small>
-        </div>
-      </button>
-
-      <button class="menu-btn" onclick="goToPage('profile')">
-        <span class="menu-icon bg-primary bg-opacity-10 text-primary">👤</span>
-        <div>
-          <h6 class="fw-bold mb-0 text-dark">ข้อมูลส่วนตัวและคะแนน</h6>
-          <small class="text-muted">เช็คพอยท์ ระดับสมาชิก และก้าวสะสม</small>
-        </div>
-      </button>
-
-      <button class="menu-btn" onclick="goToPage('upload')">
-        <span class="menu-icon bg-warning bg-opacity-10 text-warning">👣</span>
-        <div>
-          <h6 class="fw-bold mb-0 text-dark">ส่งผลก้าวเดินประจำวัน</h6>
-          <small class="text-muted">อัปโหลดรูปภาพถ่ายให้ AI ตรวจสอบ</small>
-        </div>
-      </button>
-
-      <button class="menu-btn" onclick="goToPage('reward')">
-        <span class="menu-icon bg-danger bg-opacity-10 text-danger">🎁</span>
-        <div>
-          <h6 class="fw-bold mb-0 text-dark">แลกของรางวัล</h6>
-          <small class="text-muted">ใช้คะแนนสะสมแลกสิทธิพิเศษและสินค้า</small>
-        </div>
-      </button>
-
-      <button class="menu-btn" onclick="goToPage('leaderboard')">
-        <span class="menu-icon bg-info bg-opacity-10 text-info">🏆</span>
-        <div>
-          <h6 class="fw-bold mb-0 text-dark">กระดานจัดอันดับ</h6>
-          <small class="text-muted">ตรวจสอบรายชื่อ Top 20 นักเดินสูงสุด</small>
-        </div>
-      </button>
-
-    </div>
+<div class="container">
+  <div class="text-center mb-4">
+    <h3 class="fw-bold text-success">LWS FIT</h3>
+    <p class="text-muted" style="font-size: 14px;">ก้าวเพื่อสุขภาพ สะสมพอยท์แลกของรางวัล</p>
   </div>
 
+  <!-- สถานะโหลดข้อมูล -->
+  <div id="loadingStatus" class="text-center text-primary mb-3 fw-bold" style="font-size: 14px;">
+    <span class="spinner-border spinner-border-sm"></span> กำลังตรวจสอบข้อมูลของคุณ...
+  </div>
+
+  <!-- ปุ่มเมนูต่างๆ -->
+  <button id="menuRegister" class="menu-btn btn-register" onclick="goTo('register.html')" disabled>📝 ลงทะเบียนเข้าร่วม</button>
+  <button id="menuUpload" class="menu-btn btn-upload" onclick="goTo('upload.html')" disabled>📸 ส่งผลก้าวเดิน</button>
+  <button id="menuProfile" class="menu-btn btn-profile" onclick="goTo('profile.html')" disabled>👤 โปรไฟล์ของฉัน</button>
+  <button id="menuLeaderboard" class="menu-btn btn-leaderboard" onclick="goTo('leaderboard.html')" disabled>🏆 กระดานจัดอันดับ</button>
+  <button id="menuRedeem" class="menu-btn btn-redeem" onclick="goTo('redeem.html')" disabled>🎁 แลกของรางวัล</button>
+  
+</div>
+
 <script>
-  let currentUid = ''; // ตัวแปรเก็บ UID เพื่อส่งไปหน้าอื่น
+  // ดึง UID จาก URL (หรือจาก LIFF ถ้าใช้งานจริงบน LINE)
+  const urlParams = new URLSearchParams(window.location.search);
+  const currentUid = urlParams.get('uid');
+  
+  // 🚨 ใส่ลิงก์ Deploy ของคุณตรงนี้ (ลิงก์เดียวกับที่ใส่ในหน้าอื่น)
+  const GAS_URL = "ใส่_ลิงก์_APPS_SCRIPT_ที่ลงท้ายด้วย_/exec_ของคุณที่นี่"; 
 
-  document.addEventListener("DOMContentLoaded", function() {
-    // 🌟 อย่าลืมเช็ค LIFF ID ของคุณนะครับ
-    const myLiffId = "2010703651-c2qp2DaT"; 
-    const statusText = document.getElementById('welcomeText');
-    const menu = document.getElementById('menuContainer');
-
-    liff.init({ liffId: myLiffId }).then(() => {
-      
-      if (!liff.isLoggedIn()) {
-        liff.login();
-        return;
-      }
-
-      liff.getProfile().then(profile => {
-        currentUid = profile.userId; // เก็บ UID ของผู้ใช้ไว้
-        
-        statusText.innerText = "สวัสดีคุณ " + profile.displayName;
-        statusText.style.color = "#ffffff";
-        statusText.style.fontWeight = "bold";
-        
-        // ปลดล็อกเมนู
-        menu.style.pointerEvents = "auto";
-        menu.style.opacity = "1";
-        
-      }).catch(err => {
-        statusText.innerText = "ดึงข้อมูลโปรไฟล์ไม่สำเร็จ";
-      });
-
-    }).catch(err => {
-      statusText.innerText = "LIFF Error: " + err.message;
-    });
-  });
-
-  // ฟังก์ชันสลับหน้าเว็บ (ส่ง UID แปะไปกับลิงก์ด้วย)
-  function goToPage(pageName) {
-    if (!currentUid) {
-      alert("กำลังรอเชื่อมต่อข้อมูล LINE กรุณารอสักครู่ครับ");
+  window.onload = function() {
+    if(!currentUid) {
+      document.getElementById('loadingStatus').innerHTML = "<span class='text-danger'>❌ ไม่พบข้อมูล UID กรุณาเข้าผ่าน LINE</span>";
       return;
     }
-    // เปลี่ยนหน้าไปไฟล์ .html ตามชื่อปุ่มที่กด
-    window.location.href = pageName + ".html?uid=" + currentUid;
+    
+    // ตรวจสอบว่าลงทะเบียนหรือยัง
+    checkRegistration();
+  };
+
+  function checkRegistration() {
+    fetch(GAS_URL, {
+      method: 'POST',
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action: "getProfile", userId: currentUid })
+    })
+    .then(res => res.json())
+    .then(result => {
+      document.getElementById('loadingStatus').style.display = 'none'; // ซ่อนข้อความโหลด
+
+      if (result.status === "success") {
+        // ✅ เคสที่ 1: ลงทะเบียนแล้ว
+        // 1. ล็อกปุ่มลงทะเบียน และเปลี่ยนข้อความ
+        let regBtn = document.getElementById('menuRegister');
+        regBtn.disabled = true;
+        regBtn.innerHTML = "✅ ลงทะเบียนเรียบร้อยแล้ว";
+        
+        // 2. ปลดล็อกปุ่มเมนูที่เหลือ
+        document.getElementById('menuUpload').disabled = false;
+        document.getElementById('menuProfile').disabled = false;
+        document.getElementById('menuLeaderboard').disabled = false;
+        document.getElementById('menuRedeem').disabled = false;
+
+      } else {
+        // ❌ เคสที่ 2: ยังไม่เคยลงทะเบียน
+        // ปลดล็อกเฉพาะปุ่มลงทะเบียน
+        document.getElementById('menuRegister').disabled = false;
+        // ปุ่มอื่นๆ จะถูกล็อกไว้ตามค่าเริ่มต้น (Disabled ใน HTML)
+      }
+    })
+    .catch(error => {
+      document.getElementById('loadingStatus').innerHTML = "<span class='text-danger'>❌ การเชื่อมต่อขัดข้อง โปรดรีเฟรชหน้าจอ</span>";
+    });
+  }
+
+  // ฟังก์ชันสำหรับเปลี่ยนหน้า พร้อมแนบ UID ไปด้วย
+  function goTo(page) {
+    if(currentUid) {
+      window.location.href = page + "?uid=" + currentUid;
+    }
   }
 </script>
 </body>
