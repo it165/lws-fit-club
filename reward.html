@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>แลกของรางวัล - LWS FIT</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
+  <style>
+    body { background-color: #f4f7f6; font-family: 'Sarabun', sans-serif; padding-bottom: 40px; -ms-overflow-style: none; scrollbar-width: none; }
+    ::-webkit-scrollbar { display: none; }
+    * { -webkit-tap-highlight-color: transparent; }
+    
+    .container { max-width: 480px !important; margin: 0 auto; padding: 0 15px; }
+    .point-banner { background: linear-gradient(135deg, #dc3545, #fd7e14); color: white; border-radius: 16px; padding: 25px; text-align: center; margin-top: 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(220,53,69,0.2); }
+    .point-number { font-size: 40px; font-weight: bold; margin-bottom: 0; line-height: 1; }
+    
+    .reward-card { background: white; border-radius: 12px; padding: 15px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.04); border: none; height: 100%; display: flex; flex-direction: column; justify-content: space-between; }
+    .reward-icon { font-size: 40px; margin-bottom: 10px; }
+    .reward-title { font-weight: bold; font-size: 14px; color: #212529; margin-bottom: 5px; }
+    
+    .btn-redeem { background-color: #198754; color: white; border-radius: 8px; padding: 8px; font-weight: bold; font-size: 13px; width: 100%; border: none; margin-top: 10px; }
+    .btn-redeem:disabled { background-color: #6c757d; }
+    
+    .btn-back { background-color: #e9ecef; color: #495057; width: 100%; margin-top: 20px; border-radius: 12px; padding: 12px; font-weight: bold; border: none; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  
+  <div class="point-banner">
+    <small class="opacity-75">คะแนนสะสมของคุณ</small>
+    <div class="point-number" id="myPoints">--</div>
+    <small class="opacity-75">พอยท์</small>
+  </div>
+
+  <h6 class="fw-bold text-danger mb-3">🎁 ของรางวัลที่แลกได้</h6>
+  
+  <div id="loading" class="text-center my-4">
+    <div class="spinner-border text-danger" role="status"></div>
+    <p class="mt-2 text-muted small">กำลังโหลดข้อมูล...</p>
+  </div>
+
+  <!-- รายการของรางวัล (ซ่อนไว้ก่อนจนกว่าจะโหลดคะแนนเสร็จ) -->
+  <div class="row g-3" id="rewardCatalog" style="display: none;">
+    
+    <!-- ชิ้นที่ 1 -->
+    <div class="col-6">
+      <div class="reward-card">
+        <div>
+          <div class="reward-icon">🥤</div>
+          <div class="reward-title">แก้วน้ำ LWS</div>
+          <span class="badge bg-warning text-dark">50 พอยท์</span>
+        </div>
+        <button class="btn-redeem" onclick="redeemItem('แก้วน้ำ LWS', 50)">แลกรางวัล</button>
+      </div>
+    </div>
+
+    <!-- ชิ้นที่ 2 -->
+    <div class="col-6">
+      <div class="reward-card">
+        <div>
+          <div class="reward-icon">👕</div>
+          <div class="reward-title">เสื้อยืด LWS FIT</div>
+          <span class="badge bg-warning text-dark">150 พอยท์</span>
+        </div>
+        <button class="btn-redeem" onclick="redeemItem('เสื้อยืด LWS FIT', 150)">แลกรางวัล</button>
+      </div>
+    </div>
+
+    <!-- ชิ้นที่ 3 -->
+    <div class="col-6">
+      <div class="reward-card">
+        <div>
+          <div class="reward-icon">🎟️</div>
+          <div class="reward-title">คูปองส่วนลด 500฿</div>
+          <span class="badge bg-warning text-dark">300 พอยท์</span>
+        </div>
+        <button class="btn-redeem" onclick="redeemItem('คูปองส่วนลด 500 บาท', 300)">แลกรางวัล</button>
+      </div>
+    </div>
+
+    <!-- ชิ้นที่ 4 -->
+    <div class="col-6">
+      <div class="reward-card">
+        <div>
+          <div class="reward-icon">⌚</div>
+          <div class="reward-title">Smart Watch</div>
+          <span class="badge bg-warning text-dark">1000 พอยท์</span>
+        </div>
+        <button class="btn-redeem" onclick="redeemItem('Smart Watch', 1000)">แลกรางวัล</button>
+      </div>
+    </div>
+
+  </div>
+
+  <button type="button" class="btn-back" onclick="window.location.href='index.html'">กลับหน้าแรก</button>
+</div>
+
+<script>
+  const urlParams = new URLSearchParams(window.location.search);
+  const currentUid = urlParams.get('uid');
+  
+  // 🚨 ใส่ลิงก์ Deploy ของคุณตรงนี้
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbw0jdlT9JewPZLbAOtKvdpE3bxFkMM6qXFRWoWZH5RmDgxt3w_A9nUrV1uJ_cNJFFW6qA/exec"; 
+  let userPoints = 0;
+
+  window.onload = function() {
+    if(!currentUid) {
+      Swal.fire('ไม่พบข้อมูล', 'กรุณาเข้าใช้งานผ่าน LINE', 'error')
+        .then(() => { window.location.href = 'index.html'; });
+      return;
+    }
+    fetchMyPoints();
+  };
+
+  // 1. ฟังก์ชันดึงคะแนนปัจจุบัน
+  function fetchMyPoints() {
+    fetch(GAS_URL, {
+      redirect: "follow",
+      method: 'POST',
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action: "getPoints", userId: currentUid })
+    })
+    .then(response => response.json())
+    .then(result => {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('rewardCatalog').style.display = 'flex';
+      if (result.status === "success") {
+        userPoints = result.points;
+        document.getElementById('myPoints').innerText = userPoints;
+      }
+    })
+    .catch(error => {
+      document.getElementById('loading').innerHTML = '<p class="text-danger">ขัดข้อง: ดึงข้อมูลคะแนนไม่ได้</p>';
+    });
+  }
+
+  // 2. ฟังก์ชันกดแลกของรางวัล
+  function redeemItem(itemName, cost) {
+    if (userPoints < cost) {
+      Swal.fire('คะแนนไม่พอ', `คุณต้องมี ${cost} พอยท์ สำหรับแลก ${itemName}`, 'warning');
+      return;
+    }
+
+    Swal.fire({
+      title: 'ยืนยันการแลกรางวัล?',
+      text: `ใช้ ${cost} พอยท์ แลก ${itemName}`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#198754',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'ยืนยัน',
+      cancelButtonText: 'ยกเลิก'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        processRedeem(itemName, cost);
+      }
+    });
+  }
+
+  function processRedeem(itemName, cost) {
+    Swal.fire({ title: 'กำลังดำเนินการ...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
+
+    fetch(GAS_URL, {
+      redirect: "follow",
+      method: 'POST',
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ 
+        action: "redeemReward", 
+        userId: currentUid, 
+        item: itemName, 
+        cost: cost 
+      })
+    })
+    .then(response => response.json())
+    .then(result => {
+      if (result.status === "success") {
+        Swal.fire('สำเร็จ! 🎉', 'แลกของรางวัลเรียบร้อยแล้ว รอเจ้าหน้าที่ติดต่อกลับ', 'success')
+          .then(() => { 
+            // รีเฟรชคะแนนใหม่
+            document.getElementById('myPoints').innerText = "--";
+            fetchMyPoints(); 
+          });
+      } else {
+        Swal.fire('ผิดพลาด', result.message, 'error');
+      }
+    })
+    .catch(error => {
+      Swal.fire('ขัดข้อง', 'เชื่อมต่อระบบไม่ได้', 'error');
+    });
+  }
+</script>
+</body>
+</html>
