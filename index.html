@@ -29,8 +29,7 @@
     <!-- เมนูทั้ง 5 ปุ่ม -->
     <div id="menuContainer" style="pointer-events: none; opacity: 0.6;">
       
-      <!-- ตั้ง ID ให้ปุ่ม เพื่อให้ JavaScript สั่งล็อก/ปลดล็อกได้ -->
-      <button id="btn-register" class="menu-btn" onclick="goToPage('register')">
+      <button class="menu-btn" onclick="goToPage('register')">
         <span class="menu-icon bg-success bg-opacity-10 text-success">📝</span>
         <div>
           <h6 class="fw-bold mb-0 text-dark">ลงทะเบียนสมาชิก</h6>
@@ -38,7 +37,7 @@
         </div>
       </button>
 
-      <button id="btn-profile" class="menu-btn" onclick="goToPage('profile')">
+      <button class="menu-btn" onclick="goToPage('profile')">
         <span class="menu-icon bg-primary bg-opacity-10 text-primary">👤</span>
         <div>
           <h6 class="fw-bold mb-0 text-dark">ข้อมูลส่วนตัวและคะแนน</h6>
@@ -46,7 +45,7 @@
         </div>
       </button>
 
-      <button id="btn-upload" class="menu-btn" onclick="goToPage('upload')">
+      <button class="menu-btn" onclick="goToPage('upload')">
         <span class="menu-icon bg-warning bg-opacity-10 text-warning">👣</span>
         <div>
           <h6 class="fw-bold mb-0 text-dark">ส่งผลก้าวเดินประจำวัน</h6>
@@ -54,7 +53,7 @@
         </div>
       </button>
 
-      <button id="btn-reward" class="menu-btn" onclick="goToPage('redeem')"> <!-- เปลี่ยนเป็น redeem.html ให้ตรงกับที่เราสร้าง -->
+      <button class="menu-btn" onclick="goToPage('reward')">
         <span class="menu-icon bg-danger bg-opacity-10 text-danger">🎁</span>
         <div>
           <h6 class="fw-bold mb-0 text-dark">แลกของรางวัล</h6>
@@ -62,7 +61,7 @@
         </div>
       </button>
 
-      <button id="btn-leaderboard" class="menu-btn" onclick="goToPage('leaderboard')">
+      <button class="menu-btn" onclick="goToPage('leaderboard')">
         <span class="menu-icon bg-info bg-opacity-10 text-info">🏆</span>
         <div>
           <h6 class="fw-bold mb-0 text-dark">กระดานจัดอันดับ</h6>
@@ -74,30 +73,31 @@
   </div>
 
 <script>
-  // 🚨 ใส่ลิงก์ Deploy ของ Apps Script (GAS_URL) ของคุณที่นี่
-  const GAS_URL = "ใส่_ลิงก์_APPS_SCRIPT_ที่ลงท้ายด้วย_/exec_ของคุณที่นี่"; 
-  
-  let currentUid = ''; 
+  let currentUid = ''; // ตัวแปรเก็บ UID เพื่อส่งไปหน้าอื่น
 
   document.addEventListener("DOMContentLoaded", function() {
+    // 🌟 อย่าลืมเช็ค LIFF ID ของคุณนะครับ
     const myLiffId = "2010703651-c2qp2DaT"; 
     const statusText = document.getElementById('welcomeText');
+    const menu = document.getElementById('menuContainer');
 
     liff.init({ liffId: myLiffId }).then(() => {
+      
       if (!liff.isLoggedIn()) {
         liff.login();
         return;
       }
 
       liff.getProfile().then(profile => {
-        currentUid = profile.userId; 
+        currentUid = profile.userId; // เก็บ UID ของผู้ใช้ไว้
         
-        statusText.innerText = "กำลังตรวจสอบข้อมูลของคุณ...";
+        statusText.innerText = "สวัสดีคุณ " + profile.displayName;
         statusText.style.color = "#ffffff";
         statusText.style.fontWeight = "bold";
         
-        // 🌟 เรียกฟังก์ชันเช็คกับ Google Sheets ว่าเคยลงทะเบียนหรือยัง
-        checkRegistrationStatus(profile.displayName);
+        // ปลดล็อกเมนู
+        menu.style.pointerEvents = "auto";
+        menu.style.opacity = "1";
         
       }).catch(err => {
         statusText.innerText = "ดึงข้อมูลโปรไฟล์ไม่สำเร็จ";
@@ -108,57 +108,13 @@
     });
   });
 
-  // ฟังก์ชันคุยกับ Google Sheets
-  function checkRegistrationStatus(displayName) {
-    const statusText = document.getElementById('welcomeText');
-    const menu = document.getElementById('menuContainer');
-
-    fetch(GAS_URL, {
-      method: 'POST',
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({ action: "getProfile", userId: currentUid })
-    })
-    .then(res => res.json())
-    .then(result => {
-      
-      // ปลดล็อกคอนเทนเนอร์หลักก่อน
-      menu.style.pointerEvents = "auto";
-      menu.style.opacity = "1";
-      statusText.innerText = "สวัสดีคุณ " + displayName;
-
-      if (result.status === "success") {
-        // ✅ เคยลงทะเบียนแล้ว -> ล็อกปุ่ม "ลงทะเบียนสมาชิก" ให้กดไม่ได้
-        let regBtn = document.getElementById('btn-register');
-        regBtn.style.backgroundColor = "#f1f3f5";
-        regBtn.style.opacity = "0.7";
-        regBtn.onclick = null; // ปิดการทำงานคลิก
-        regBtn.querySelector('h6').innerText = "✅ ลงทะเบียนเรียบร้อยแล้ว";
-        regBtn.querySelector('small').innerText = "พบข้อมูลของคุณในระบบแล้ว";
-        regBtn.querySelector('.menu-icon').innerText = "🔒";
-        // ปุ่มอื่นๆ สามารถกดได้ตามปกติ
-      } else {
-        // ❌ ยังไม่เคยลงทะเบียน -> ล็อกปุ่มอื่นๆ ทั้งหมด ให้กดได้แค่ปุ่มลงทะเบียน
-        let otherBtns = ['btn-profile', 'btn-upload', 'btn-reward', 'btn-leaderboard'];
-        otherBtns.forEach(id => {
-          let btn = document.getElementById(id);
-          btn.style.opacity = "0.5";
-          btn.onclick = function() {
-            alert("⚠️ กรุณาลงทะเบียนสมาชิกก่อนเข้าใช้งานเมนูนี้ครับ");
-          };
-        });
-      }
-    })
-    .catch(error => {
-      statusText.innerText = "❌ ตรวจสอบข้อมูลไม่สำเร็จ โปรดลองใหม่";
-    });
-  }
-
   // ฟังก์ชันสลับหน้าเว็บ (ส่ง UID แปะไปกับลิงก์ด้วย)
   function goToPage(pageName) {
     if (!currentUid) {
       alert("กำลังรอเชื่อมต่อข้อมูล LINE กรุณารอสักครู่ครับ");
       return;
     }
+    // เปลี่ยนหน้าไปไฟล์ .html ตามชื่อปุ่มที่กด
     window.location.href = pageName + ".html?uid=" + currentUid;
   }
 </script>
