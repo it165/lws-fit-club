@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>แลกของรางวัล - LWS FIT</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
+  <style>
+    body { background-color: #f4f7f6; font-family: 'Sarabun', sans-serif; padding-bottom: 40px; }
+    .container { max-width: 480px !important; margin: 0 auto; padding: 0 15px; }
+    .header-box { background: linear-gradient(135deg, #f59f00, #f08c00); border-radius: 16px; padding: 20px; color: white; text-align: center; margin-top: 20px; box-shadow: 0 4px 15px rgba(245, 159, 0, 0.2); }
+    .reward-card { background: white; border-radius: 12px; padding: 15px; margin-top: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; }
+    .reward-info { flex-grow: 1; }
+    .reward-title { font-weight: bold; font-size: 16px; color: #333; margin-bottom: 5px; }
+    .reward-cost { color: #f59f00; font-weight: bold; font-size: 14px; }
+    .reward-stock { font-size: 12px; color: #6c757d; }
+    .btn-redeem { background-color: #198754; color: white; border-radius: 8px; padding: 8px 15px; font-weight: bold; border: none; font-size: 14px; }
+    .btn-redeem:disabled { background-color: #cccccc; cursor: not-allowed; }
+    .btn-back { background-color: #e9ecef; color: #495057; border-radius: 12px; padding: 12px; font-weight: bold; width: 100%; border: none; margin-top: 20px; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  
+  <!-- กล่องแสดงพอยท์ปัจจุบัน -->
+  <div class="header-box">
+    <div style="font-size: 14px; opacity: 0.9;">🎁 พอยท์ของคุณ</div>
+    <div class="fw-bold" style="font-size: 32px;" id="myPoints">กำลังโหลด...</div>
+  </div>
+
+  <h5 class="fw-bold text-dark mt-4 mb-3">🛍️ รายการของรางวัล</h5>
+  
+  <!-- พื้นที่แสดงกล่องของรางวัล -->
+  <div id="rewardList">
+    <div class="text-center text-muted mt-4">กำลังโหลดของรางวัล...</div>
+  </div>
+
+  <button type="button" class="btn-back" onclick="window.location.href='index.html'">กลับหน้าหลัก</button>
+</div>
+
+<script>
+  const urlParams = new URLSearchParams(window.location.search);
+  const currentUid = urlParams.get('uid');
+  
+  // 🚨 ใส่ลิงก์ Deploy ของคุณตรงนี้
+  const GAS_URL = "ใส่_ลิงก์_APPS_SCRIPT_ที่ลงท้ายด้วย_/exec_ของคุณที่นี่"; 
+  let currentPoints = 0;
+
+  window.onload = function() {
+    if(!currentUid) {
+      Swal.fire({ icon: 'error', title: 'ไม่พบข้อมูล', text: 'กรุณาเข้าใช้งานผ่านเมนูใน LINE' })
+        .then(() => { window.location.href = 'index.html'; });
+      return;
+    }
+    loadData();
+  };
+
+  // ดึงพอยท์และรายการของรางวัลพร้อมกัน
+  function loadData() {
+    // 1. ดึงพอยท์ปัจจุบัน
+    fetch(GAS_URL, {
+      method: 'POST',
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action: "getPoints", userId: currentUid })
+    })
+    .then(res => res.json())
+    .then(result => {
+      if (result.status === "success") {
+        currentPoints = result.points;
+        document.getElementById('myPoints').innerText = currentPoints.toLocaleString();
+      }
+    });
+
+    // 2. ดึงรายการของรางวัล
+    fetch(GAS_URL, {
+      method: 'POST',
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action: "getRewards" })
+    })
+    .then(res => res.json())
+    .then(result => {
+      let rewardContainer = document.getElementById('rewardList');
+      rewardContainer.innerHTML = "";
+      
+      if (result.status === "success" && result.data.length > 0) {
+        result.data.forEach(item => {
+          let canRedeem = currentPoints >= item.cost;
+          let btnClass = canRedeem ? 'btn-redeem' : 'btn-redeem text-muted';
+          let btnAttr = canRedeem ? `onclick="confirmRedeem('${item.name}', ${item.cost})"` : 'disabled';
+          let btnText = canRedeem ? 'แลกรางวัล' : 'พอยท์ไม่พอ';
+
+          let card = `
+            <div class="reward-card">
+              <div class="reward-info">
+                <div class="reward-title">${item.name}</div>
+                <div class="reward-cost">💎 ใช้ ${item.cost.toLocaleString()} พอยท์</div>
+                <div class="reward-stock">เหลือ: ${item.stock} ชิ้น</div>
+              </div>
+              <div>
+                <button class="${btnClass}" ${btnAttr}>${btnText}</button>
+              </div>
+            </div>
+          `;
+          rewardContainer.innerHTML += card;
+        });
+      } else {
+        rewardContainer.innerHTML = '<div class="text-center text-muted mt-4">ยังไม่มีของรางวัลในขณะนี้</div>';
+      }
+    });
+  }
+
+  // ฟังก์ชันกดยืนยันแลกของรางวัล
+  function confirmRedeem(itemName, itemCost) {
+    Swal.fire({
+      title: 'ยืนยันการแลกรางวัล?',
+      text: `คุณต้องการใช้ ${itemCost} พอยท์ เพื่อแลก "${itemName}" ใช่หรือไม่?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'ใช่, แลกเลย!',
+      cancelButtonText: 'ยกเลิก'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        processRedeem(itemName, itemCost);
+      }
+    });
+  }
+
+  // ฟังก์ชันส่งคำสั่งตัดพอยท์ไปหลังบ้าน
+  function processRedeem(itemName, itemCost) {
+    Swal.fire({ title: 'กำลังทำรายการ...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+
+    fetch(GAS_URL, {
+      method: 'POST',
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action: "redeemReward", userId: currentUid, item: itemName, cost: itemCost })
+    })
+    .then(res => res.json())
+    .then(result => {
+      if (result.status === "success") {
+        Swal.fire('สำเร็จ! 🎉', 'แลกของรางวัลเรียบร้อยแล้ว รอรับของได้เลย!', 'success')
+          .then(() => { location.reload(); }); // โหลดหน้าใหม่เพื่ออัปเดตพอยท์และสต็อก
+      } else {
+        Swal.fire('ผิดพลาด', result.message, 'error');
+      }
+    })
+    .catch(error => {
+      Swal.fire('ขัดข้อง', 'เชื่อมต่อระบบไม่ได้', 'error');
+    });
+  }
+</script>
+</body>
+</html>
