@@ -27,17 +27,15 @@
 <div class="container">
   <div class="card p-4">
     <div class="text-center mb-3">
-      <h5 class="fw-bold text-success">ส่งผลก้าวเดินประจำวัน</h5>
+      <h5 class="fw-bold text-success">👣 ส่งผลก้าวเดินประจำวัน</h5>
     </div>
 
-    <!-- ป้ายแจ้งเตือน AI -->
     <div class="ai-badge fw-bold">
-      ✨ ระบบ AI จะอ่านจำนวนก้าวจากรูปภาพอัตโนมัติ
+      ✨ ระบบ AI จะอ่านจำนวนก้าวและแอปที่ใช้จากรูปภาพอัตโนมัติ
     </div>
 
     <form id="uploadForm">
       
-      <!-- กล่องอัปโหลดรูปภาพ -->
       <div class="upload-box" id="dropZone" onclick="document.getElementById('fileInput').click()">
         <div id="uploadPrompt">
           <h1 class="mb-2">📸</h1>
@@ -58,8 +56,8 @@
   const urlParams = new URLSearchParams(window.location.search);
   const currentUid = urlParams.get('uid');
   
-  // 🚨 ใส่ลิงก์ Deploy Apps Script ของคุณตรงนี้
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbw0jdlT9JewPZLbAOtKvdpE3bxFkMM6qXFRWoWZH5RmDgxt3w_A9nUrV1uJ_cNJFFW6qA/exec"; 
+  // 🚨 ใส่ลิงก์ Deploy ของคุณตรงนี้
+  const GAS_URL = "ใส่_ลิงก์_APPS_SCRIPT_ที่ลงท้ายด้วย_/exec_ของคุณที่นี่"; 
   let base64String = "";
   let fileType = "";
   let fileName = "";
@@ -117,9 +115,16 @@
     .then(response => response.json())
     .then(result => {
       if (result.status === "success") {
+        // 🌟 อัปเดตป๊อปอัปให้โชว์ข้อมูลจาก JSON ที่ AI ส่งมา
         Swal.fire({
-          title: 'สำเร็จ! 🎉',
-          html: `AI ตรวจพบก้าวเดิน: <b>${result.aiSteps.toLocaleString()}</b> ก้าว<br><small class="text-muted">บันทึกผลเรียบร้อยแล้ว</small>`,
+          title: 'วิเคราะห์สำเร็จ! 🎉',
+          html: `
+            <div style="text-align: left; background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 10px;">
+              👣 จำนวนก้าว: <b class="text-success" style="font-size: 1.2em;">${result.aiSteps.toLocaleString()}</b> ก้าว<br>
+              📱 แอปที่ใช้: <b>${result.aiDevice}</b>
+            </div>
+            <small class="text-muted d-block mt-3">บันทึกผลลงระบบเรียบร้อยแล้ว</small>
+          `,
           icon: 'success'
         }).then(() => { window.location.href = 'index.html'; });
       } else {
