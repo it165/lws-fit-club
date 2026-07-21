@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Admin Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  
+  <style>
+    body { background-color: #f4f7f6; font-family: 'Sarabun', sans-serif; padding: 20px 0; }
+    .container { max-width: 700px !important; margin: 0 auto; padding: 0 15px; }
+    .dashboard-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
+    .stat-title { font-size: 14px; color: #6c757d; text-align: center;}
+    .stat-value { font-size: 28px; font-weight: bold; color: #198754; text-align: center;}
+    th { background-color: #212529 !important; color: white !important; font-size: 14px; text-align: center;}
+    td { font-size: 14px; vertical-align: middle; }
+    .btn-icon { padding: 4px 8px; font-size: 12px; }
+    #qr-reader { width: 100%; border: none !important; margin: 0 auto; }
+  </style>
+</head>
+<body>
+
+<div class="container" id="loginScreen">
+  <div class="dashboard-card text-center" style="margin-top: 50px;">
+    <h4 class="fw-bold mb-3">🔒 แผงควบคุมผู้ดูแลระบบ</h4>
+    <p class="text-muted small">กรุณาใส่รหัส PIN เพื่อเข้าสู่ระบบ (ค่าเริ่มต้น 9999)</p>
+    <input type="password" id="adminPin" class="form-control text-center mb-3 mx-auto" style="max-width: 200px;" placeholder="รหัส PIN 4 หลัก" maxlength="4">
+    <button class="btn btn-dark fw-bold px-4" onclick="loginAdmin()">เข้าสู่ระบบ</button>
+  </div>
+</div>
+
+<div class="container" id="dashboardScreen" style="display: none;">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold m-0">🛠️ LWS FIT Admin</h4>
+    <button class="btn btn-outline-danger btn-sm" onclick="location.reload()">ล็อกเอาต์</button>
+  </div>
+
+  <button id="btnOpenScanner" class="btn btn-primary w-100 mb-4 py-3 fw-bold shadow-sm" onclick="openScanner()" style="font-size: 16px; border-radius: 12px;">
+    📷 เปิดกล้องสแกนจ่ายของรางวัล
+  </button>
+
+  <!-- พื้นที่เปิดกล้องสแกน -->
+  <div id="scannerArea" style="display: none; background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 2px solid #0d6efd;">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h6 class="fw-bold m-0 text-primary">📷 สแกน QR Code</h6>
+      <button class="btn btn-sm btn-danger fw-bold" onclick="closeScanner()">❌ ปิดกล้อง</button>
+    </div>
+    <div id="qr-reader" style="max-width: 400px;"></div>
+    <div class="mt-4 pt-3" style="border-top: 1px dashed #ccc;">
+      <label class="text-muted small mb-1">* หากกล้องใช้งานไม่ได้ ให้พิมพ์รหัสอ้างอิงเอง</label>
+      <div class="input-group">
+        <input type="text" id="manualTxnId" class="form-control text-center" placeholder="เช่น RW-1721...">
+        <button class="btn btn-success fw-bold" onclick="submitManualTxnId()">ยืนยัน</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-6">
+      <div class="dashboard-card" onclick="viewAllUsers()" style="cursor: pointer; background: linear-gradient(135deg, #f8f9fa, #e9ecef); border: 2px solid #dee2e6;">
+        <div class="stat-title">👥 สมาชิกทั้งหมด <br><span class="badge bg-secondary mt-1">👆 คลิกดูรายชื่อ</span></div>
+        <div class="stat-value" id="statUsers">0</div>
+      </div>
+    </div>
+    <div class="col-6">
+      <div class="dashboard-card">
+        <div class="stat-title">🏃 ก้าวสะสมรวม<br><span style="opacity:0;">เว้นบรรทัด</span></div>
+        <div class="stat-value" id="statSteps">0</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dashboard-card mb-4">
+    <h6 class="fw-bold mb-3">⚙️ ตั้งค่าระบบ (เรทคะแนน)</h6>
+    <div class="input-group">
+      <span class="input-group-text">ก้าว / 1 พอยท์</span>
+      <input type="number" id="settingSteps" class="form-control text-center">
+      <button class="btn btn-dark fw-bold" onclick="saveSetting()">บันทึก</button>
+    </div>
+  </div>
+
+  <div class="dashboard-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h6 class="fw-bold m-0">🎁 จัดการของรางวัล</h6>
+      <button class="btn btn-success btn-sm fw-bold" onclick="addReward()">+ เพิ่มรายการ</button>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover table-bordered bg-white">
+        <thead><tr><th>ชื่อรางวัล</th><th width="15%">พอยท์</th><th width="15%">สต็อก</th><th width="25%">จัดการ</th></tr></thead>
+        <tbody id="rewardTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 🚨 ใส่ลิงก์ Deploy Apps Script (ที่ลงท้ายด้วย /exec) ของคุณที่นี่
+  const GAS_URL = "ใส่_ลิงก์_APPS_SCRIPT_ที่ลงท้ายด้วย_/exec_ของคุณที่นี่"; 
+  
+  let currentPin = "";
+  let html5QrcodeScanner = null;
+  let allUsersData = []; 
+
+  // ฟังก์ชันกลางยิงข้อมูลไปที่ Google Sheets (ผ่าน POST method ล้วนๆ)
+  function callAdminAPI(payload, loadingText = "กำลังประมวลผล...") {
+    Swal.fire({ title: loadingText, didOpen: () => Swal.showLoading() });
+    return fetch(GAS_URL, {
+      method: 'POST',
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(payload)
+    }).then(res => res.json()).catch(err => {
+      Swal.fire('ขัดข้อง', 'เชื่อมต่อระบบไม่ได้', 'error');
+      throw err;
+    });
+  }
+
+  function reloadData() {
+    callAdminAPI({ action: "getAdminData", pin: currentPin }, "กำลังโหลดข้อมูล...").then(result => {
+      if (result.status === "success") {
+        Swal.close();
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('dashboardScreen').style.display = 'block';
+        
+        document.getElementById('statUsers').innerText = result.totalUsers.toLocaleString();
+        document.getElementById('statSteps').innerText = result.totalSteps.toLocaleString();
+        document.getElementById('settingSteps').value = result.stepsPerPoint;
+        
+        allUsersData = result.usersList || []; 
+        let tbody = document.getElementById('rewardTableBody');
+        tbody.innerHTML = "";
+        
+        result.rewards.forEach(r => {
+          let stockColor = r.stock <= 5 ? 'text-danger fw-bold' : 'text-success fw-bold';
+          tbody.innerHTML += `<tr>
+            <td>${r.name}</td>
+            <td class="text-center text-warning fw-bold">${r.cost.toLocaleString()}</td>
+            <td class="text-center ${stockColor}">${r.stock}</td>
+            <td class="text-center">
+              <button class="btn btn-warning btn-icon" onclick="editReward(${r.row}, '${r.name}', ${r.cost}, ${r.stock})">✏️</button>
+              <button class="btn btn-danger btn-icon" onclick="deleteReward(${r.row}, '${r.name}')">🗑️</button>
+            </td>
+          </tr>`;
+        });
+      } else Swal.fire('ผิดพลาด', result.message, 'error');
+    });
+  }
+
+  function loginAdmin() {
+    let pin = document.getElementById('adminPin').value;
+    if (pin.length !== 4) return Swal.fire('แจ้งเตือน', 'กรุณาใส่รหัส PIN 4 หลัก', 'warning');
+    currentPin = pin;
+    reloadData();
+  }
+
+  function viewAllUsers() {
+    if (allUsersData.length === 0) return Swal.fire('แจ้งเตือน', 'ยังไม่มีสมาชิก', 'info');
+    let tableRows = allUsersData.map((u, index) => `
+      <tr>
+        <td class="text-center text-muted">${index + 1}</td>
+        <td><b class="text-dark">${u.name}</b><br><small class="text-muted">${u.project}</small></td>
+        <td class="text-end text-success">${u.totalSteps.toLocaleString()}</td>
+        <td class="text-end text-warning fw-bold">${u.points.toLocaleString()}</td>
+      </tr>
+    `).join('');
+    Swal.fire({
+      title: '👥 รายชื่อสมาชิก',
+      html: `<div class="table-responsive" style="max-height: 50vh; overflow-y: auto; text-align: left;"><table class="table table-sm table-hover align-middle" style="font-size: 14px;"><tbody>${tableRows}</tbody></table></div>`,
+      width: '600px', showCloseButton: true, showConfirmButton: false
+    });
+  }
+
+  function openScanner() {
+    document.getElementById('scannerArea').style.display = 'block';
+    document.getElementById('btnOpenScanner').style.display = 'none';
+    if (html5QrcodeScanner) { try { html5QrcodeScanner.clear(); } catch(e){} }
+    html5QrcodeScanner = new Html5QrcodeScanner("qr-reader", { fps: 10, qrbox: {width: 250, height: 250} }, false);
+    html5QrcodeScanner.render(onScanSuccess, (err) => {});
+  }
+
+  function closeScanner() {
+    document.getElementById('scannerArea').style.display = 'none';
+    document.getElementById('btnOpenScanner').style.display = 'block';
+    if (html5QrcodeScanner) { try { html5QrcodeScanner.clear(); } catch(e){} html5QrcodeScanner = null; }
+  }
+
+  function onScanSuccess(decodedText) {
+    closeScanner();
+    let txnId = decodedText.includes("txnId=") ? decodedText.split("txnId=")[1].split("&")[0] : decodedText;
+    processClaim(txnId);
+  }
+
+  function submitManualTxnId() {
+    let txnId = document.getElementById('manualTxnId').value;
+    if(!txnId) return Swal.fire('แจ้งเตือน', 'กรุณากรอกรหัส', 'warning');
+    closeScanner();
+    processClaim(txnId);
+  }
+
+  function processClaim(txnId) {
+    callAdminAPI({ action: "processRewardClaim", pin: currentPin, txnId: txnId }).then(res => {
+      if(res.status === "success") Swal.fire({icon: 'success', title: 'สำเร็จ!', text: res.message});
+      else Swal.fire({icon: 'error', title: 'ผิดพลาด', text: res.message});
+    });
+  }
+
+  function processAdminAction(subAction, payloadData) {
+    callAdminAPI({ action: "adminAction", pin: currentPin, subAction: subAction, payload: payloadData }).then(res => {
+      if(res.status === "success") {
+        Swal.fire({icon: 'success', title: 'สำเร็จ', text: res.message, timer: 1500, showConfirmButton: false});
+        reloadData();
+      } else Swal.fire('ผิดพลาด', res.message, 'error');
+    });
+  }
+
+  function saveSetting() {
+    let steps = document.getElementById('settingSteps').value;
+    if(!steps) return alert('ระบุตัวเลข');
+    processAdminAction('updateSetting', { stepsPerPoint: parseInt(steps) });
+  }
+
+  function addReward() {
+    Swal.fire({
+      title: 'เพิ่มของรางวัล',
+      html: `<input type="text" id="rName" class="form-control mb-2" placeholder="ชื่อรางวัล"><input type="number" id="rCost" class="form-control mb-2" placeholder="พอยท์"><input type="number" id="rStock" class="form-control" placeholder="สต็อก">`,
+      preConfirm: () => {
+        let name = document.getElementById('rName').value, cost = document.getElementById('rCost').value, stock = document.getElementById('rStock').value;
+        if(!name || !cost || !stock) return Swal.showValidationMessage('กรอกข้อมูลให้ครบ!');
+        return { name: name, cost: cost, stock: stock };
+      }
+    }).then((res) => { if(res.isConfirmed) processAdminAction('addReward', res.value); });
+  }
+
+  function editReward(row, name, oldCost, oldStock) {
+    Swal.fire({
+      title: 'แก้ไข: ' + name,
+      html: `<input type="number" id="eCost" class="form-control mb-2" value="${oldCost}"><input type="number" id="eStock" class="form-control" value="${oldStock}">`,
+      preConfirm: () => {
+        let cost = document.getElementById('eCost').value, stock = document.getElementById('eStock').value;
+        if(!cost || !stock) return Swal.showValidationMessage('กรอกข้อมูลให้ครบ!');
+        return { row: row, cost: cost, stock: stock };
+      }
+    }).then((res) => { if(res.isConfirmed) processAdminAction('updateReward', res.value); });
+  }
+
+  function deleteReward(row, name) {
+    Swal.fire({
+      title: 'ลบของรางวัล?', text: `ลบ "${name}" ใช่หรือไม่?`, showCancelButton: true
+    }).then((res) => { if(res.isConfirmed) processAdminAction('deleteReward', { row: row }); });
+  }
+</script>
+</body>
+</html>
