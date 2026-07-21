@@ -15,6 +15,14 @@
     .menu-btn { background-color: #ffffff; border: none; border-radius: 15px; padding: 20px; width: 100%; text-align: left; margin-bottom: 15px; display: flex; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.03); transition: transform 0.1s; cursor: pointer; }
     .menu-btn:active { transform: scale(0.98); background-color: #f8f9fa; }
     .menu-icon { font-size: 28px; margin-right: 15px; width: 45px; height: 45px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; }
+    
+    /* 🌟 CSS สำหรับปุ่มที่ถูกล็อก */
+    .locked-btn { 
+      opacity: 0.5; 
+      pointer-events: none; 
+      filter: grayscale(100%); 
+      background-color: #e9ecef;
+    }
   </style>
 </head>
 <body>
@@ -22,22 +30,22 @@
   <div class="main-box">
     
     <div class="header-banner">
-      <h4 class="fw-bold mb-1">LWS FIT FOR HEALTH CLUB</h4>
+      <h4 class="fw-bold mb-1">LWS FIT FOR HEALTH</h4>
       <p class="mb-0 small opacity-75" id="welcomeText">กำลังโหลดข้อมูล LINE...</p>
     </div>
 
-    <!-- เมนูทั้ง 5 ปุ่ม -->
+    <!-- 🌟 ตั้ง ID ให้กับปุ่มทุกปุ่ม เพื่อให้ JavaScript สั่งล็อกได้ -->
     <div id="menuContainer" style="pointer-events: none; opacity: 0.6;">
       
-      <button class="menu-btn" onclick="goToPage('register')">
+      <button class="menu-btn" id="btn-register" onclick="goToPage('register')">
         <span class="menu-icon bg-success bg-opacity-10 text-success">📝</span>
         <div>
-          <h6 class="fw-bold mb-0 text-dark">ลงทะเบียนสมาชิก</h6>
+          <h6 class="fw-bold mb-0 text-dark" id="txt-register">ลงทะเบียนสมาชิก</h6>
           <small class="text-muted">กรอกข้อมูลผู้ใช้งานครั้งแรก</small>
         </div>
       </button>
 
-      <button class="menu-btn" onclick="goToPage('profile')">
+      <button class="menu-btn" id="btn-profile" onclick="goToPage('profile')">
         <span class="menu-icon bg-primary bg-opacity-10 text-primary">👤</span>
         <div>
           <h6 class="fw-bold mb-0 text-dark">ข้อมูลส่วนตัวและคะแนน</h6>
@@ -45,7 +53,7 @@
         </div>
       </button>
 
-      <button class="menu-btn" onclick="goToPage('upload')">
+      <button class="menu-btn" id="btn-upload" onclick="goToPage('upload')">
         <span class="menu-icon bg-warning bg-opacity-10 text-warning">🏃</span>
         <div>
           <h6 class="fw-bold mb-0 text-dark">ส่งผลก้าวประจำวัน</h6>
@@ -53,7 +61,7 @@
         </div>
       </button>
 
-      <button class="menu-btn" onclick="goToPage('redeem')">
+      <button class="menu-btn" id="btn-redeem" onclick="goToPage('redeem')">
         <span class="menu-icon bg-danger bg-opacity-10 text-danger">🎁</span>
         <div>
           <h6 class="fw-bold mb-0 text-dark">แลกของรางวัล</h6>
@@ -61,7 +69,7 @@
         </div>
       </button>
 
-      <button class="menu-btn" onclick="goToPage('leaderboard')">
+      <button class="menu-btn" id="btn-leaderboard" onclick="goToPage('leaderboard')">
         <span class="menu-icon bg-info bg-opacity-10 text-info">🏆</span>
         <div>
           <h6 class="fw-bold mb-0 text-dark">กระดานจัดอันดับ</h6>
@@ -73,13 +81,23 @@
   </div>
 
 <script>
-  let currentUid = ''; // ตัวแปรเก็บ UID เพื่อส่งไปหน้าอื่น
+  let currentUid = ''; 
+  
+  // 🚨 นำลิงก์ Apps Script (ที่ลงท้ายด้วย /exec) มาวางตรงนี้ครับ
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbw0jdlT9JewPZLbAOtKvdpE3bxFkMM6qXFRWoWZH5RmDgxt3w_A9nUrV1uJ_cNJFFW6qA/exec"; 
 
   document.addEventListener("DOMContentLoaded", function() {
-    // 🌟 อย่าลืมเช็ค LIFF ID ของคุณนะครับ
     const myLiffId = "2010703651-c2qp2DaT"; 
     const statusText = document.getElementById('welcomeText');
     const menu = document.getElementById('menuContainer');
+
+    // ดึงปุ่มต่างๆ มารอไว้
+    const btnRegister = document.getElementById('btn-register');
+    const txtRegister = document.getElementById('txt-register');
+    const btnProfile = document.getElementById('btn-profile');
+    const btnUpload = document.getElementById('btn-upload');
+    const btnRedeem = document.getElementById('btn-redeem');
+    const btnLeaderboard = document.getElementById('btn-leaderboard');
 
     liff.init({ liffId: myLiffId }).then(() => {
       
@@ -89,15 +107,54 @@
       }
 
       liff.getProfile().then(profile => {
-        currentUid = profile.userId; // เก็บ UID ของผู้ใช้ไว้
+        currentUid = profile.userId; 
+        statusText.innerText = "กำลังตรวจสอบสิทธิ์...";
         
-        statusText.innerText = "สวัสดีคุณ " + profile.displayName;
-        statusText.style.color = "#ffffff";
-        statusText.style.fontWeight = "bold";
-        
-        // ปลดล็อกเมนู
-        menu.style.pointerEvents = "auto";
-        menu.style.opacity = "1";
+        // 🌟 ยิงคำสั่งไปเช็คที่ Google Sheets ว่าเคยสมัครหรือยัง?
+        fetch(GAS_URL, {
+          method: 'POST',
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "getProfile", userId: currentUid })
+        })
+        .then(res => res.json())
+        .then(result => {
+          
+          statusText.innerText = "สวัสดีคุณ " + profile.displayName;
+          statusText.style.color = "#ffffff";
+          statusText.style.fontWeight = "bold";
+          
+          // ปลดล็อกเมนูหลัก
+          menu.style.pointerEvents = "auto";
+          menu.style.opacity = "1";
+
+          if (result.status === "success") {
+            // ✅ กรณีที่ 1: เคยสมัครแล้ว
+            // ล็อกปุ่มลงทะเบียน
+            btnRegister.classList.add('locked-btn');
+            txtRegister.innerText = "✅ ลงทะเบียนแล้ว";
+            
+            // ปลดล็อกปุ่มใช้งานอื่นๆ ทั้งหมด
+            btnProfile.classList.remove('locked-btn');
+            btnUpload.classList.remove('locked-btn');
+            btnRedeem.classList.remove('locked-btn');
+            btnLeaderboard.classList.remove('locked-btn');
+            
+          } else {
+            // ❌ กรณีที่ 2: ยังไม่เคยสมัคร
+            // เปิดให้กดแค่ปุ่มลงทะเบียน
+            btnRegister.classList.remove('locked-btn');
+            txtRegister.innerText = "📝 ลงทะเบียนสมาชิก";
+            
+            // ล็อกปุ่มใช้งานอื่นๆ ทั้งหมด (กลายเป็นสีเทาและกดไม่ได้)
+            btnProfile.classList.add('locked-btn');
+            btnUpload.classList.add('locked-btn');
+            btnRedeem.classList.add('locked-btn');
+            btnLeaderboard.classList.add('locked-btn');
+          }
+        })
+        .catch(err => {
+          statusText.innerText = "เชื่อมต่อฐานข้อมูลไม่สำเร็จ";
+        });
         
       }).catch(err => {
         statusText.innerText = "ดึงข้อมูลโปรไฟล์ไม่สำเร็จ";
@@ -108,13 +165,12 @@
     });
   });
 
-  // ฟังก์ชันสลับหน้าเว็บ (ส่ง UID แปะไปกับลิงก์ด้วย)
+  // ฟังก์ชันสลับหน้าเว็บ
   function goToPage(pageName) {
     if (!currentUid) {
       alert("กำลังรอเชื่อมต่อข้อมูล LINE กรุณารอสักครู่ครับ");
       return;
     }
-    // เปลี่ยนหน้าไปไฟล์ .html ตามชื่อปุ่มที่กด
     window.location.href = pageName + ".html?uid=" + currentUid;
   }
 </script>
