@@ -3,117 +3,127 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>กระดานจัดอันดับ - LWS FIT</title>
+  <title>Leaderboard - LWS FIT</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   
   <style>
-    body { background-color: #f4f7f6; font-family: 'Sarabun', sans-serif; padding-bottom: 40px; -ms-overflow-style: none; scrollbar-width: none; }
-    ::-webkit-scrollbar { display: none; }
-    * { -webkit-tap-highlight-color: transparent; }
-    
+    body { background-color: #f4f7f6; font-family: 'Sarabun', sans-serif; padding-bottom: 40px; padding-top: 20px; }
     .container { max-width: 480px !important; margin: 0 auto; padding: 0 15px; }
-    .header-banner { background: linear-gradient(135deg, #ffc107, #ff9800); color: white; border-radius: 16px; padding: 25px 20px; text-align: center; margin-top: 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(255,152,0,0.2); }
     
-    .rank-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 10px; display: flex; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.04); border: none; }
-    .rank-number { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; margin-right: 15px; flex-shrink: 0; }
+    .header-box { background: linear-gradient(135deg, #0d6efd, #0b5ed7); border-radius: 16px; padding: 25px 20px; color: white; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(13, 110, 253, 0.2); }
     
-    /* สีพิเศษสำหรับ Top 3 */
-    .rank-1 { background-color: #ffd700; color: #855a00; box-shadow: 0 0 10px rgba(255,215,0,0.5); }
-    .rank-2 { background-color: #c0c0c0; color: #4a4a4a; }
-    .rank-3 { background-color: #cd7f32; color: #5c3a21; }
-    .rank-normal { background-color: #f8f9fa; color: #6c757d; border: 1px solid #dee2e6; }
+    .rank-card { background: white; border-radius: 12px; padding: 12px; margin-bottom: 12px; display: flex; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.04); position: relative; overflow: hidden; }
     
-    .user-info { flex-grow: 1; }
-    .user-name { font-weight: bold; color: #212529; margin-bottom: 0; font-size: 16px; }
-    .user-project { font-size: 12px; color: #6c757d; margin-bottom: 0; }
-    .step-count { font-weight: bold; color: #198754; font-size: 18px; text-align: right; }
-    .step-label { font-size: 10px; color: #6c757d; display: block; text-align: right; margin-top: -3px; }
+    /* ตกแต่งอันดับ 1-3 เป็นพิเศษ */
+    .rank-1 { border: 2px solid #ffc107; background: #fffcf2; }
+    .rank-2 { border: 2px solid #adb5bd; background: #f8f9fa; }
+    .rank-3 { border: 2px solid #d38c44; background: #fdfaf7; }
+    
+    .rank-number { width: 35px; font-size: 18px; font-weight: bold; text-align: center; color: #6c757d; }
+    .rank-1 .rank-number { font-size: 24px; color: #ffc107; }
+    .rank-2 .rank-number { font-size: 22px; color: #adb5bd; }
+    .rank-3 .rank-number { font-size: 20px; color: #d38c44; }
 
-    .btn-back { background-color: #e9ecef; color: #495057; width: 100%; margin-top: 15px; border-radius: 12px; padding: 12px; font-weight: bold; border: none; }
+    /* 🌟 รูปโปรไฟล์ Avatar */
+    .avatar-img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; margin-right: 12px; background-color: #eee; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    
+    .user-info { flex-grow: 1; overflow: hidden; }
+    .user-name { font-weight: bold; font-size: 15px; color: #333; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    
+    /* 🌟 ป้ายแรงค์ */
+    .tier-badge { font-size: 11px; padding: 2px 8px; border-radius: 10px; color: white; display: inline-block; margin-bottom: 3px; }
+    
+    .user-project { font-size: 12px; color: #6c757d; }
+    .step-count { font-size: 18px; font-weight: bold; color: #198754; text-align: right; white-space: nowrap; }
+    
+    .btn-back { background-color: #e9ecef; color: #495057; border-radius: 12px; padding: 12px; font-weight: bold; width: 100%; border: none; margin-top: 10px; }
   </style>
 </head>
 <body>
 
 <div class="container">
-  <div class="header-banner">
-    <h1 class="mb-0">🏆</h1>
-    <h4 class="fw-bold mt-2 mb-0">TOP 20 LEADERBOARD</h4>
-    <small class="opacity-75">นักเดินที่ก้าวเยอะที่สุดในโครงการ</small>
+  
+  <div class="header-box">
+    <h3 class="fw-bold mb-1">🏆 TOP 20</h3>
+    <div style="font-size: 14px; opacity: 0.9;">กระดานจัดอันดับนักเดินสูงสุด</div>
   </div>
 
-  <div id="loading" class="text-center my-5">
-    <div class="spinner-border text-warning" role="status"></div>
-    <p class="mt-3 text-muted fw-bold">กำลังคำนวณอันดับ...</p>
+  <div id="leaderboardList">
+    <div class="text-center text-muted mt-5">
+      <div class="spinner-border text-primary mb-2" role="status"></div>
+      <div>กำลังโหลดข้อมูลจัดอันดับ...</div>
+    </div>
   </div>
 
-  <!-- กล่องแสดงรายชื่อ -->
-  <div id="leaderboardList" style="display: none;"></div>
-
-  <button type="button" class="btn-back" onclick="window.location.href='index.html'">กลับหน้าแรก</button>
+  <button type="button" class="btn-back mt-4" onclick="goBack()">กลับหน้าหลัก</button>
 </div>
 
 <script>
+  const urlParams = new URLSearchParams(window.location.search);
+  const currentUid = urlParams.get('uid');
+  
   // 🚨 ใส่ลิงก์ Deploy ของคุณตรงนี้
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbw0jdlT9JewPZLbAOtKvdpE3bxFkMM6qXFRWoWZH5RmDgxt3w_A9nUrV1uJ_cNJFFW6qA/exec"; 
+  const GAS_URL = "ใส่_ลิงก์_APPS_SCRIPT_ที่ลงท้ายด้วย_/exec_ของคุณที่นี่"; 
 
   window.onload = function() {
-    fetchLeaderboard();
+    loadLeaderboard();
   };
 
-  function fetchLeaderboard() {
-    const payload = { action: "getLeaderboard" };
-
+  function loadLeaderboard() {
     fetch(GAS_URL, {
-      redirect: "follow",
       method: 'POST',
       headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({ action: "getLeaderboard" })
     })
-    .then(response => response.json())
+    .then(res => res.json())
     .then(result => {
-      document.getElementById('loading').style.display = 'none';
-      const listContainer = document.getElementById('leaderboardList');
-      listContainer.style.display = 'block';
-
+      let listContainer = document.getElementById('leaderboardList');
+      listContainer.innerHTML = "";
+      
       if (result.status === "success" && result.data.length > 0) {
-        let htmlContent = "";
         
         result.data.forEach((user, index) => {
           let rank = index + 1;
-          let rankClass = "rank-normal";
-          let medal = rank;
+          let rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : '';
+          let rankIcon = rank === 1 ? '👑' : rank;
+          
+          // 🌟 สร้าง Avatar อัตโนมัติจากชื่อ
+          let avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random&color=fff&size=100&font-size=0.4`;
 
-          if (rank === 1) { rankClass = "rank-1"; medal = "🥇"; }
-          else if (rank === 2) { rankClass = "rank-2"; medal = "🥈"; }
-          else if (rank === 3) { rankClass = "rank-3"; medal = "🥉"; }
-
-          // จัด Format ตัวเลขให้มีลูกน้ำ (เช่น 10000 -> 10,000)
-          let formattedSteps = Number(user.steps).toLocaleString();
-
-          htmlContent += `
-            <div class="rank-card">
-              <div class="rank-number ${rankClass}">${medal}</div>
+          let card = `
+            <div class="rank-card ${rankClass}">
+              <div class="rank-number">${rankIcon}</div>
+              <img src="${avatarUrl}" class="avatar-img" alt="Avatar">
               <div class="user-info">
-                <p class="user-name">${user.name}</p>
-                <p class="user-project">${user.project}</p>
+                <div class="user-name">${user.name}</div>
+                <div class="tier-badge" style="background: ${user.tierColor}">${user.tier}</div>
+                <div class="user-project">${user.project}</div>
               </div>
-              <div>
-                <div class="step-count">${formattedSteps}</div>
-                <span class="step-label">ก้าว</span>
+              <div class="step-count">
+                ${user.steps.toLocaleString()}<br>
+                <small class="text-muted" style="font-size: 11px;">ก้าว</small>
               </div>
             </div>
           `;
+          listContainer.innerHTML += card;
         });
-        
-        listContainer.innerHTML = htmlContent;
+
       } else {
-        listContainer.innerHTML = `<div class="alert alert-warning text-center">ยังไม่มีข้อมูลการก้าวเดินในระบบครับ</div>`;
+        listContainer.innerHTML = '<div class="text-center text-muted mt-4">ยังไม่มีข้อมูลการเดินในขณะนี้</div>';
       }
     })
     .catch(error => {
-      document.getElementById('loading').innerHTML = `<p class="text-danger">ขัดข้อง: ไม่สามารถดึงข้อมูลได้</p>`;
+      document.getElementById('leaderboardList').innerHTML = '<div class="text-center text-danger mt-4">❌ โหลดข้อมูลไม่สำเร็จ โปรดลองใหม่</div>';
     });
+  }
+
+  function goBack() {
+    if(currentUid) {
+      window.location.href = 'index.html?uid=' + currentUid;
+    } else {
+      window.location.href = 'index.html';
+    }
   }
 </script>
 </body>
