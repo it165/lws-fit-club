@@ -75,6 +75,10 @@
         <label class="form-label fw-bold">6. วันเกิด</label>
         <input type="date" class="form-control" id="birthdate" required>
       </div>
+      <div class="mb-3">
+        <label class="form-label fw-bold">7. โรคประจำตัว (ถ้ามี)</label>
+        <input type="text" class="form-control" id="disease" required placeholder="หากไม่มีให้ระบุว่า - (ขีดกลาง)">
+      </div>
       <div class="mb-4 form-check">
         <input type="checkbox" class="form-check-input" id="agree" required>
         <label class="form-check-label text-muted small" for="agree">ยอมรับเงื่อนไขและนโยบายความเป็นส่วนตัวของโครงการ</label>
@@ -120,7 +124,8 @@
       project: document.getElementById('project').value,
       province: document.getElementById('province').value,
       customerType: document.getElementById('customerType').value,
-      birthdate: document.getElementById('birthdate').value
+      birthdate: document.getElementById('birthdate').value,
+      disease: document.getElementById('disease').value
     };
     
     // ยิงข้อมูลไป Google Apps Script
