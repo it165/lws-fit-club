@@ -13,13 +13,13 @@
     .container { max-width: 480px !important; margin: 0 auto; padding: 0 15px; }
     .card { border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); border: none; margin-top: 20px; }
     
-    .upload-box { border: 2px dashed #0d6efd; border-radius: 12px; padding: 30px 20px; text-align: center; background-color: #f8f9fa; cursor: pointer; margin-bottom: 15px; position: relative; transition: 0.3s; }
+    .upload-box { border: 2px dashed #0d6efd; border-radius: 12px; padding: 25px 20px; text-align: center; background-color: #f8f9fa; cursor: pointer; margin-bottom: 15px; position: relative; transition: 0.3s; }
     .upload-box:active { background-color: #e2e3e5; }
     .preview-img { max-width: 100%; max-height: 200px; border-radius: 8px; display: none; margin: 0 auto; }
     
     .btn-submit { background-color: #198754; color: white; border-radius: 12px; padding: 12px; font-weight: bold; width: 100%; border: none; margin-bottom: 10px; }
     .btn-back { background-color: #e9ecef; color: #495057; border-radius: 12px; padding: 12px; font-weight: bold; width: 100%; border: none; }
-    .ai-badge { background: linear-gradient(135deg, #6f42c1, #0d6efd); color: white; border-radius: 8px; padding: 10px; text-align: center; font-size: 13px; margin-bottom: 15px; }
+    .form-control, .form-select { border-radius: 10px; padding: 12px; font-size: 16px; margin-bottom: 15px;}
   </style>
 </head>
 <body>
@@ -28,14 +28,28 @@
   <div class="card p-4">
     <div class="text-center mb-3">
       <h5 class="fw-bold text-success">ส่งผลก้าวประจำวัน</h5>
-    </div>
-
-    <div class="ai-badge fw-bold">
-      ระบบ AI จะอ่านจำนวนก้าวและแอปที่ใช้จากรูปภาพอัตโนมัติ
+      <p class="text-muted small">กรุณากรอกจำนวนก้าวและแนบรูปภาพเป็นหลักฐาน</p>
     </div>
 
     <form id="uploadForm">
       
+      <!-- 🌟 เพิ่มช่องให้กรอกข้อมูลเอง -->
+      <label class="fw-bold text-dark mb-1">จำนวนก้าวในรูปภาพ</label>
+      <input type="number" id="inputSteps" class="form-control" placeholder="เช่น 10500" required>
+
+      <label class="fw-bold text-dark mb-1">แอปที่ใช้จับก้าว (อุปกรณ์)</label>
+      <select id="inputDevice" class="form-select" required>
+        <option value="" disabled selected>-- เลือกแอปที่ใช้งาน --</option>
+        <option value="Apple Health (iPhone)">Apple Health (iPhone)</option>
+        <option value="Google Fit (Android)">Google Fit (Android)</option>
+        <option value="Garmin">Garmin</option>
+        <option value="Zepp / Amazfit">Zepp / Amazfit</option>
+        <option value="Huawei Health">Huawei Health</option>
+        <option value="Samsung Health">Samsung Health</option>
+        <option value="อื่นๆ">อื่นๆ</option>
+      </select>
+
+      <label class="fw-bold text-dark mb-1 mt-2">รูปภาพหลักฐานหน้าจอ</label>
       <div class="upload-box" id="dropZone" onclick="document.getElementById('fileInput').click()">
         <div id="uploadPrompt">
           <h1 class="mb-2">📸</h1>
@@ -43,10 +57,10 @@
         </div>
         <img id="imagePreview" class="preview-img">
       </div>
-      <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="previewFile()">
+      <input type="file" id="fileInput" accept="image/*" style="display: none;" required onchange="previewFile()">
 
-      <button type="submit" class="btn-submit" id="submitBtn">ให้อ่านภาพและส่งผล</button>
-      <button type="button" class="btn-back" onclick="window.location.href='index.html'">กลับหน้าแรก</button>
+      <button type="submit" class="btn-submit" id="submitBtn">ยืนยันการส่งผลก้าว</button>
+      <button type="button" class="btn-back" onclick="window.location.href='index.html?uid=' + currentUid">กลับหน้าแรก</button>
       
     </form>
   </div>
@@ -89,18 +103,25 @@
   document.getElementById('uploadForm').addEventListener('submit', function(e) {
     e.preventDefault();
     
+    // ตรวจสอบว่าแนบรูปและกรอกข้อมูลครบไหม
     if (!base64String) {
       Swal.fire('แจ้งเตือน', 'กรุณาแนบรูปภาพหน้าจอก่อนครับ', 'warning');
       return;
     }
 
+    const stepValue = document.getElementById('inputSteps').value;
+    const deviceValue = document.getElementById('inputDevice').value;
+
     const btn = document.getElementById('submitBtn');
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> AI กำลังวิเคราะห์รูปภาพ...';
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> กำลังบันทึกข้อมูล...';
     btn.disabled = true;
 
+    // 🌟 ส่งข้อมูลที่พิมพ์เองไปให้ Apps Script
     const payload = {
       action: "uploadSteps",
       userId: currentUid,
+      stepCount: stepValue,
+      device: deviceValue,
       fileName: fileName,
       mimeType: fileType,
       imageBase64: base64String
@@ -115,18 +136,17 @@
     .then(response => response.json())
     .then(result => {
       if (result.status === "success") {
-        // 🌟 อัปเดตป๊อปอัปให้โชว์ข้อมูลจาก JSON ที่ AI ส่งมา
         Swal.fire({
-          title: 'วิเคราะห์สำเร็จ! 🎉',
+          title: 'ส่งผลสำเร็จ! 🎉',
           html: `
             <div style="text-align: left; background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 10px;">
-              🏃🏃‍♂️ จำนวนก้าว: <b class="text-success" style="font-size: 1.2em;">${result.aiSteps.toLocaleString()}</b> ก้าว<br>
-              📱 แอปที่ใช้: <b>${result.aiDevice}</b>
+              🏃🏃‍♂️ จำนวนก้าว: <b class="text-success" style="font-size: 1.2em;">${result.savedSteps.toLocaleString()}</b> ก้าว<br>
+              📱 แอปที่ใช้: <b>${result.savedDevice}</b>
             </div>
-            <small class="text-muted d-block mt-3">บันทึกผลลงระบบเรียบร้อยแล้ว</small>
+            <small class="text-muted d-block mt-3">ระบบบันทึกผลและอัปเดตคะแนนให้คุณแล้ว</small>
           `,
           icon: 'success'
-        }).then(() => { window.location.href = 'index.html'; });
+        }).then(() => { window.location.href = 'index.html?uid=' + currentUid; });
       } else {
         Swal.fire('ผิดพลาด', result.message, 'error');
       }
@@ -135,7 +155,7 @@
       Swal.fire('ขัดข้อง', 'เชื่อมต่อระบบไม่ได้', 'error');
     })
     .finally(() => {
-      btn.innerHTML = 'ให้อ่านภาพและส่งผล';
+      btn.innerHTML = 'ยืนยันการส่งผลก้าว';
       btn.disabled = false;
     });
   });
