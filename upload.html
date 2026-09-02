@@ -6,6 +6,8 @@
   <title>ส่งผลก้าว - LWS FIT</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <!-- เพิ่ม Tesseract.js สำหรับ OCR -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   
   <style>
     body { background-color: #f4f7f6; font-family: 'Sarabun', sans-serif; padding-bottom: 40px; }
@@ -13,13 +15,17 @@
     .container { max-width: 480px !important; margin: 0 auto; padding: 0 15px; }
     .card { border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); border: none; margin-top: 20px; }
     
-    .upload-box { border: 2px dashed #0d6efd; border-radius: 12px; padding: 25px 20px; text-align: center; background-color: #f8f9fa; cursor: pointer; margin-bottom: 15px; position: relative; transition: 0.3s; }
+    .upload-box { border: 2px dashed #0d6efd; border-radius: 12px; padding: 40px 20px; text-align: center; background-color: #f8f9fa; cursor: pointer; margin-bottom: 15px; transition: 0.3s; }
     .upload-box:active { background-color: #e2e3e5; }
-    .preview-img { max-width: 100%; max-height: 200px; border-radius: 8px; display: none; margin: 0 auto; }
+    .preview-img { max-width: 100%; max-height: 250px; border-radius: 12px; display: none; margin: 0 auto; object-fit: contain; }
     
     .btn-submit { background-color: #198754; color: white; border-radius: 12px; padding: 12px; font-weight: bold; width: 100%; border: none; margin-bottom: 10px; }
     .btn-back { background-color: #e9ecef; color: #495057; border-radius: 12px; padding: 12px; font-weight: bold; width: 100%; border: none; }
     .form-control, .form-select { border-radius: 10px; padding: 12px; font-size: 16px; margin-bottom: 15px;}
+    
+    /* คลาสเพิ่มเติมสำหรับสลับการแสดงผลตามโค้ด OCR */
+    .hidden { display: none !important; }
+    .flex { display: flex !important; }
   </style>
 </head>
 <body>
@@ -28,39 +34,57 @@
   <div class="card p-4">
     <div class="text-center mb-3">
       <h5 class="fw-bold text-success">ส่งผลก้าวประจำวัน</h5>
-      <p class="text-muted small">กรุณากรอกจำนวนก้าวและแนบรูปภาพเป็นหลักฐาน</p>
+      <p class="text-muted small">กรุณาแนบรูปภาพ ระบบจะดึงจำนวนก้าวให้อัตโนมัติ</p>
     </div>
 
     <form id="uploadForm">
-      
-      <!-- 🌟 เพิ่มช่องให้กรอกข้อมูลเอง -->
-      <label class="fw-bold text-dark mb-1">จำนวนก้าวในรูปภาพ</label>
-      <input type="number" id="inputSteps" class="form-control" placeholder="เช่น 10500" required>
-
-      <label class="fw-bold text-dark mb-1">แอปที่ใช้จับก้าว (อุปกรณ์)</label>
-      <select id="inputDevice" class="form-select" required>
-        <option value="" disabled selected>-- เลือกแอปที่ใช้งาน --</option>
-        <option value="Apple Health (iPhone)">Apple Health (iPhone)</option>
-        <option value="Google Fit (Android)">Google Fit (Android)</option>
-        <option value="Garmin">Garmin</option>
-        <option value="Zepp / Amazfit">Zepp / Amazfit</option>
-        <option value="Huawei Health">Huawei Health</option>
-        <option value="Samsung Health">Samsung Health</option>
-        <option value="อื่นๆ">อื่นๆ</option>
-      </select>
-
       <label class="fw-bold text-dark mb-1 mt-2">รูปภาพหลักฐานหน้าจอ</label>
-      <div class="upload-box" id="dropZone" onclick="document.getElementById('fileInput').click()">
+      
+      <!-- พื้นที่อัปโหลดรูปภาพ -->
+      <div class="upload-box" id="uploadZone" onclick="document.getElementById('fileInput').click()">
         <div id="uploadPrompt">
           <h1 class="mb-2">📸</h1>
           <span class="text-primary fw-bold">แตะเพื่อเลือกรูปภาพหน้าจอ</span>
         </div>
-        <img id="imagePreview" class="preview-img">
       </div>
       <input type="file" id="fileInput" accept="image/*" style="display: none;" required onchange="previewFile()">
 
-      <button type="submit" class="btn-submit" id="submitBtn">ยืนยันการส่งผลก้าว</button>
-      <button type="button" class="btn-back" onclick="window.location.href='index.html?uid=' + currentUid">กลับหน้าแรก</button>
+      <!-- แสดงสถานะกำลังสแกนรูป (OCR) -->
+      <div id="loadingOCR" class="hidden flex-column align-items-center justify-content-center my-4 py-3">
+        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;"></div>
+        <span class="mt-3 fw-bold text-primary">กำลังสแกนตัวเลขจากรูปภาพ...</span>
+        <span class="text-muted small mt-1">อาจใช้เวลาสักครู่</span>
+      </div>
+
+      <!-- คอนเทนเนอร์ฟอร์มจะซ่อนไว้ก่อนจนกว่าจะอัปโหลดและสแกนเสร็จ -->
+      <div id="formContainer" class="hidden flex-column">
+        
+        <!-- รูปภาพพรีวิวพร้อมปุ่มลบ -->
+        <div class="position-relative mb-4 text-center bg-light rounded" style="padding: 10px; border: 1px solid #dee2e6;">
+          <img id="imagePreview" class="preview-img">
+          <button type="button" class="btn btn-danger btn-sm w-100 mt-2 rounded-3 fw-bold" id="removeImage">
+            🗑️ ลบรูปภาพและเลือกใหม่
+          </button>
+        </div>
+
+        <label class="fw-bold text-dark mb-1">จำนวนก้าวในรูปภาพ (แก้ไขได้)</label>
+        <input type="number" id="inputSteps" class="form-control" placeholder="เช่น 10500" required>
+
+        <label class="fw-bold text-dark mb-1">แอปที่ใช้จับก้าว (อุปกรณ์)</label>
+        <select id="inputDevice" class="form-select" required>
+          <option value="" disabled selected>-- เลือกแอปที่ใช้งาน --</option>
+          <option value="Apple Health (iPhone)">Apple Health (iPhone)</option>
+          <option value="Google Fit (Android)">Google Fit (Android)</option>
+          <option value="Garmin">Garmin</option>
+          <option value="Zepp / Amazfit">Zepp / Amazfit</option>
+          <option value="Huawei Health">Huawei Health</option>
+          <option value="Samsung Health">Samsung Health</option>
+          <option value="อื่นๆ">อื่นๆ</option>
+        </select>
+
+        <button type="submit" class="btn-submit" id="submitBtn">ยืนยันการส่งผลก้าว</button>
+        <button type="button" class="btn-back" onclick="window.location.href='index.html?uid=' + currentUid">กลับหน้าแรก</button>
+      </div>
       
     </form>
   </div>
@@ -72,9 +96,20 @@
   
   // 🚨 ใส่ลิงก์ Deploy ของคุณตรงนี้
   const GAS_URL = "https://script.google.com/macros/s/AKfycbw0jdlT9JewPZLbAOtKvdpE3bxFkMM6qXFRWoWZH5RmDgxt3w_A9nUrV1uJ_cNJFFW6qA/exec"; 
+  
+  // ตัวแปรสำหรับข้อมูลไฟล์
   let base64String = "";
   let fileType = "";
   let fileName = "";
+  let currentImageDataUrl = "";
+
+  // ประกาศตัวแปรอ้างอิง DOM Elements เพื่อใช้ในฟังก์ชัน OCR
+  const uploadZone = document.getElementById('uploadZone');
+  const fileInput = document.getElementById('fileInput');
+  const loadingOCR = document.getElementById('loadingOCR');
+  const formContainer = document.getElementById('formContainer');
+  const imagePreview = document.getElementById('imagePreview');
+  const inputSteps = document.getElementById('inputSteps');
 
   window.onload = function() {
     if(!currentUid) {
@@ -84,39 +119,100 @@
   };
 
   function previewFile() {
-    const file = document.getElementById('fileInput').files[0];
+    const file = fileInput.files[0];
     if (file) {
       fileName = file.name;
       fileType = file.type;
       
       const reader = new FileReader();
       reader.onloadend = function() {
-        document.getElementById('imagePreview').src = reader.result;
-        document.getElementById('imagePreview').style.display = 'block';
-        document.getElementById('uploadPrompt').style.display = 'none';
+        currentImageDataUrl = reader.result;
         base64String = reader.result.split(',')[1];
+        
+        // แสดงรูปภาพในพรีวิว
+        imagePreview.src = currentImageDataUrl;
+        imagePreview.style.display = 'block';
+
+        // ปิดการแสดงผลกล่องอัปโหลด และเปิดโหลดดิ้ง OCR
+        uploadZone.classList.add('hidden');
+        loadingOCR.classList.remove('hidden');
+        loadingOCR.classList.add('flex');
+        
+        // เรียกใช้ฟังก์ชัน OCR ของคุณ
+        scanImageWithOCR(currentImageDataUrl);
       }
       reader.readAsDataURL(file);
     }
   }
 
+  // ฟังก์ชัน OCR จากโค้ดที่คุณเตรียมไว้
+  async function scanImageWithOCR(imageUrl) {
+    try {
+        const result = await Tesseract.recognize(imageUrl, 'eng');
+        const cleanText = result.data.text.replace(/,/g, '');
+        const numbers = cleanText.match(/\d+/g);
+        let estimatedSteps = "";
+
+        if (numbers) {
+            // กรองหาตัวเลขที่เป็นไปได้ว่าจะเป็นก้าวเดิน (500 - 100,000)
+            const validSteps = numbers.map(Number).filter(n => n > 500 && n <= 100000);
+            if (validSteps.length > 0) estimatedSteps = Math.max(...validSteps);
+        }
+
+        // อัปเดตข้อมูลลงในช่อง
+        inputSteps.value = estimatedSteps;
+
+    } catch (error) {
+        console.error("OCR Error:", error);
+        inputSteps.value = "";
+    } finally {
+        // ซ่อน Loading และแสดงฟอร์มเมื่อสแกนเสร็จ
+        loadingOCR.classList.add('hidden');
+        loadingOCR.classList.remove('flex');
+        formContainer.classList.remove('hidden');
+        formContainer.classList.add('flex');
+        
+        // แจ้งเตือนหากไม่พบตัวเลข
+        if(!inputSteps.value) {
+            Swal.fire({
+                title: 'สแกนตัวเลขไม่สำเร็จ',
+                text: 'ไม่สามารถอ่านจำนวนก้าวจากภาพได้ กรุณากรอกตัวเลขด้วยตนเอง',
+                icon: 'info',
+                timer: 3000,
+                showConfirmButton: false
+            });
+        }
+    }
+  }
+
+  // จัดการปุ่มลบรูปภาพตามที่คุณเตรียมไว้
+  document.getElementById('removeImage').addEventListener('click', () => {
+      fileInput.value = '';
+      currentImageDataUrl = "";
+      base64String = "";
+      inputSteps.value = "";
+      imagePreview.style.display = 'none';
+      
+      formContainer.classList.add('hidden');
+      formContainer.classList.remove('flex');
+      uploadZone.classList.remove('hidden');
+  });
+
   document.getElementById('uploadForm').addEventListener('submit', function(e) {
     e.preventDefault();
     
-    // ตรวจสอบว่าแนบรูปและกรอกข้อมูลครบไหม
     if (!base64String) {
       Swal.fire('แจ้งเตือน', 'กรุณาแนบรูปภาพหน้าจอก่อนครับ', 'warning');
       return;
     }
 
-    const stepValue = document.getElementById('inputSteps').value;
+    const stepValue = inputSteps.value;
     const deviceValue = document.getElementById('inputDevice').value;
 
     const btn = document.getElementById('submitBtn');
     btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> กำลังบันทึกข้อมูล...';
     btn.disabled = true;
 
-    // 🌟 ส่งข้อมูลที่พิมพ์เองไปให้ Apps Script
     const payload = {
       action: "uploadSteps",
       userId: currentUid,
@@ -140,7 +236,7 @@
           title: 'ส่งผลสำเร็จ! 🎉',
           html: `
             <div style="text-align: left; background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 10px;">
-              🏃🏃‍♂️ จำนวนก้าว: <b class="text-success" style="font-size: 1.2em;">${result.savedSteps.toLocaleString()}</b> ก้าว<br>
+              🏃🏃‍♂️ จำนวนก้าว: <b class="text-success" style="font-size: 1.2em;">${Number(result.savedSteps).toLocaleString()}</b> ก้าว<br>
               📱 แอปที่ใช้: <b>${result.savedDevice}</b>
             </div>
             <small class="text-muted d-block mt-3">ระบบบันทึกผลและอัปเดตคะแนนให้คุณแล้ว</small>
@@ -152,7 +248,7 @@
       }
     })
     .catch(error => {
-      Swal.fire('ขัดข้อง', 'เชื่อมต่อระบบไม่ได้', 'error');
+      Swal.fire('ขัดข้อง', 'เชื่อมต่อระบบไม่ได้ หรือลิงก์ GAS ไม่ถูกต้อง', 'error');
     })
     .finally(() => {
       btn.innerHTML = 'ยืนยันการส่งผลก้าว';
